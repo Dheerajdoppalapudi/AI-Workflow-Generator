@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  password     String
+  username     String        @unique
+  role         Role          @default(USER)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  projects     Project[]
+  workflows    Workflow[]
+}
+
+model Team {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  agents      Agent[]
+  projects    Project[]
+}
+
+model Agent {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  prompt      String?  // Agent's system prompt/instructions
+  settings    String?  // JSON string for additional settings
+  icon        String?
+  teamId      Int
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([teamId, name])
+}
+
+model Project {
+  id           Int           @id @default(autoincrement())
+  name         String
+  description  String?
+  userId       Int
+  teamId       Int
+  status       ProjectStatus @default(ACTIVE)
+  user         User          @relation(fields: [userId], references: [id])
+  team         Team          @relation(fields: [teamId], references: [id])
+  requirements Requirement[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Requirement {
+  id             Int                @id @default(autoincrement())
+  projectId      Int
+  project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inputText      String             // Original user input text
+  combinedText   String             // Combined text from input + files
+  outputText     String?            // Generated output/questions
+  filesData      String?            // JSON string of uploaded files metadata
+  filesProcessed Int                @default(0)
+  status         RequirementStatus  @default(PENDING)
+  requestTime    DateTime           @default(now())
+  responseTime   DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model Workflow {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  userId      Int
+  teamId      Int?
+  workflowData String  // JSON string containing agents, connections, and positions
+  thumbnail   String?  // Optional thumbnail image URL
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+
+enum RequirementStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}

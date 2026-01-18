@@ -1,0 +1,17 @@
+NODE_ENV=test npx prisma migrate dev --name init  -> move to testing environment
+npm test - > run tests
+npm run test:coverage -> run tests and coverage report
+
+// to migrate back
+
+npx prisma migrate dev --name init
+NODE_ENV=development npx prisma migrate dev --name init
+
+
+
+create a drone application, where users can come and books drones for spraying they have to select the date and slot and proceed to booking, also show the user his/her booking history and app need to have a homepage
+
+
+the AI Agent header look sgood but one thing  below there is so much more padding can you remove it ? 
+
+and the can vas can you make it little bigger because user spends most of his dime designing the work flow and for the nodes in the workflow we are able to connect them left and right it should also be like they should be conencted from top and bottom and each node can have multiple inputs and outputs lines, you can take n8n for reference
