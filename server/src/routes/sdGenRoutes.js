@@ -7,7 +7,9 @@ import {
   updateAgent,
   deleteAgent,
   initializeTeamsAndAgents,
-  generateWorkflow
+  generateWorkflow,
+  getCommonAgents,
+  initializeCommonAgents
 } from '../controllers/sdGenController.js';
 import { processRequirements, enhanceRequirements } from '../controllers/requirementController.js';
 import { generateInitialPlanning } from '../controllers/planningController.js';
@@ -39,6 +41,10 @@ router.post('/agents', createAgent);
 router.put('/agents/:agentId', updateAgent);
 router.delete('/agents/:agentId', deleteAgent);
 router.post('/initialize', initializeTeamsAndAgents);
+
+// Common agents routes
+router.get('/common-agents', getCommonAgents);
+router.post('/initialize-common-agents', initializeCommonAgents);
 
 // Workflow routes (temporarily without authentication for testing)
 router.post('/workflows', createWorkflow);

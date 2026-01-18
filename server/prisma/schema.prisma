@@ -89,6 +89,18 @@ model Workflow {
   @@index([userId])
 }
 
+model CommonAgent {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  prompt      String?  // Agent's system prompt/instructions
+  category    String?  // Category like "File Conversion", "Communication", "Data Processing"
+  icon        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 enum Role {
   USER
   ADMIN
