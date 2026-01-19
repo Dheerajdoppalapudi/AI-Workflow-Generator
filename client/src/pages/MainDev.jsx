@@ -346,31 +346,38 @@ const MainDev = () => {
                 />
             )}
 
-            {/* Main Content */}
-            <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 24px 24px' }}>
+            {/* Canvas Designer View - Full Width */}
+            {viewMode === 'canvas' && (
+                <div style={{
+                    padding: '16px 24px 24px 24px'
+                }}>
+                    {loading ? (
+                        <EmptyState
+                            type="loading"
+                            isDarkMode={isDarkMode}
+                            teamName={selectedTeam?.name || 'agents'}
+                        />
+                    ) : (
+                        <AgentCanvasDesigner
+                            onComplete={handleCanvasComplete}
+                            isDarkMode={isDarkMode}
+                            initialAgentData={customAgentData}
+                            selectedTeam={selectedTeam}
+                            onAgentsUpdated={(updatedAgents) => {
+                                // Optional: Handle agent list updates if needed
+                            }}
+                        />
+                    )}
+                </div>
+            )}
 
-                {/* Canvas Designer View */}
-                {viewMode === 'canvas' && (
-                    <div>
-                        {loading ? (
-                            <EmptyState
-                                type="loading"
-                                isDarkMode={isDarkMode}
-                                teamName={selectedTeam?.name || 'agents'}
-                            />
-                        ) : (
-                            <AgentCanvasDesigner
-                                onComplete={handleCanvasComplete}
-                                isDarkMode={isDarkMode}
-                                initialAgentData={customAgentData}
-                                selectedTeam={selectedTeam}
-                                onAgentsUpdated={(updatedAgents) => {
-                                    // Optional: Handle agent list updates if needed
-                                }}
-                            />
-                        )}
-                    </div>
-                )}
+            {/* Main Content - For non-canvas views */}
+            {viewMode !== 'canvas' && (
+            <div style={{
+                maxWidth: 1200,
+                margin: '0 auto',
+                padding: '24px 24px 24px 24px'
+            }}>
 
                 {/* Pipeline View */}
                 {viewMode === 'pipeline' && (
@@ -422,6 +429,7 @@ const MainDev = () => {
                     </>
                 )}
             </div>
+            )}
 
             {/* Completion Modal */}
             <Modal
