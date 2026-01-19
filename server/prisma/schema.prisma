@@ -94,6 +94,7 @@ model CommonAgent {
   name        String   @unique
   description String?
   prompt      String?  // Agent's system prompt/instructions
+  settings    String?  // JSON string for settings with key, value, required fields
   category    String?  // Category like "File Conversion", "Communication", "Data Processing"
   icon        String?
   isActive    Boolean  @default(true)

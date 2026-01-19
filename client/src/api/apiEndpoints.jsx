@@ -38,7 +38,6 @@ export const API_ENDPOINTS = {
     DELETE_WORKFLOW: `${BASE_URL}/sdgen/workflows`,
     GENERATE_WORKFLOW: `${BASE_URL}/sdgen/generate-workflow`,
     GET_COMMON_AGENTS: `${BASE_URL}/sdgen/common-agents`,
-    INITIALIZE_COMMON_AGENTS: `${BASE_URL}/sdgen/initialize-common-agents`,
   }
 };
 
@@ -168,13 +167,6 @@ export const sdGenServices = {
 
   getCommonAgents: async () => {
     const response = await fetch(API_ENDPOINTS.SDGEN.GET_COMMON_AGENTS);
-    return await response.json();
-  },
-
-  initializeCommonAgents: async () => {
-    const response = await fetch(API_ENDPOINTS.SDGEN.INITIALIZE_COMMON_AGENTS, {
-      method: 'POST'
-    });
     return await response.json();
   }
 };

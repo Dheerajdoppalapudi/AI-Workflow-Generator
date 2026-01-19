@@ -41,6 +41,7 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                             name: agent.name,
                             description: agent.description || '',
                             prompt: agent.prompt || '',
+                            settings: agent.settings || null,
                             icon: agent.icon || 'RobotOutlined'
                         }));
                         setAgentTemplates(templates);
@@ -55,11 +56,10 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
         fetchTeamAgents();
     }, [selectedTeam]);
 
-    // Load common agents
+    // Load common agents from database
     useEffect(() => {
         const fetchCommonAgents = async () => {
             try {
-                await sdGenServices.initializeCommonAgents();
                 const result = await sdGenServices.getCommonAgents();
                 if (result.success && result.commonAgents) {
                     setCommonAgents(result.commonAgents);
@@ -323,11 +323,20 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
             return false;
         }
 
+        // Validate required settings
+        const allSettings = values.settings || [];
+        const missingRequired = allSettings.filter(s => s && s.required && !s.value);
+        if (missingRequired.length > 0) {
+            const missingKeys = missingRequired.map(s => s.key).join(', ');
+            message.error(`Required settings missing: ${missingKeys}`);
+            return false;
+        }
+
         setIsLoading(true);
         const token = localStorage.getItem('token');
 
-        // Process settings - filter out empty entries
-        const settings = values.settings?.filter(s => s && s.key && s.value) || [];
+        // Process settings - keep all settings including required ones, filter only completely empty
+        const settings = allSettings.filter(s => s && s.key) || [];
 
         try {
             if (editingNode) {

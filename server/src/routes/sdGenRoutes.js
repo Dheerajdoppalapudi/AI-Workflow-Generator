@@ -6,11 +6,13 @@ import {
   createAgent,
   updateAgent,
   deleteAgent,
-  initializeTeamsAndAgents,
   generateWorkflow,
-  getCommonAgents,
-  initializeCommonAgents
+  getCommonAgents
 } from '../controllers/sdGenController.js';
+import {
+  initializeTeamsAndAgents,
+  initializeCommonAgents
+} from '../controllers/seedingDataController.js';
 import { processRequirements, enhanceRequirements } from '../controllers/requirementController.js';
 import { generateInitialPlanning } from '../controllers/planningController.js';
 import {

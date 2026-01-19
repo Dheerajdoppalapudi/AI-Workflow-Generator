@@ -1,6 +1,6 @@
 import React from 'react';
-import { Modal, Form, Input, Button, Typography, Space, Divider } from 'antd';
-import { RobotOutlined, SaveOutlined, PlusOutlined, MinusCircleOutlined, SettingOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, Button, Typography, Space, Divider, Checkbox, Tag } from 'antd';
+import { RobotOutlined, SaveOutlined, PlusOutlined, MinusCircleOutlined, SettingOutlined, LockOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -78,48 +78,77 @@ export const AgentFormModal = ({
                 <Form.List name="settings">
                     {(fields, { add, remove }) => (
                         <>
-                            {fields.map(({ key, name, ...restField }) => (
-                                <div
-                                    key={key}
-                                    style={{
-                                        display: 'flex',
-                                        gap: 8,
-                                        marginBottom: 12,
-                                        alignItems: 'flex-start'
-                                    }}
-                                >
-                                    <Form.Item
-                                        {...restField}
-                                        name={[name, 'key']}
-                                        rules={[{ required: true, message: 'Enter label' }]}
-                                        style={{ marginBottom: 0, flex: 1 }}
+                            {fields.map(({ key, name, ...restField }) => {
+                                const settingValue = form.getFieldValue(['settings', name]);
+                                const isRequired = settingValue?.required === true;
+
+                                return (
+                                    <div
+                                        key={key}
+                                        style={{
+                                            display: 'flex',
+                                            gap: 8,
+                                            marginBottom: 12,
+                                            alignItems: 'flex-start'
+                                        }}
                                     >
-                                        <Input
-                                            placeholder="Label"
-                                            style={{
-                                                backgroundColor: isDarkMode ? '#374151' : '#f3f4f6'
-                                            }}
-                                        />
-                                    </Form.Item>
-                                    <Form.Item
-                                        {...restField}
-                                        name={[name, 'value']}
-                                        rules={[{ required: true, message: 'Enter value' }]}
-                                        style={{ marginBottom: 0, flex: 2 }}
-                                    >
-                                        <Input placeholder="Value" />
-                                    </Form.Item>
-                                    <Button
-                                        type="text"
-                                        danger
-                                        icon={<MinusCircleOutlined />}
-                                        onClick={() => remove(name)}
-                                    />
-                                </div>
-                            ))}
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'key']}
+                                            rules={[{ required: true, message: 'Enter label' }]}
+                                            style={{ marginBottom: 0, flex: 1 }}
+                                        >
+                                            <Input
+                                                placeholder="Label"
+                                                disabled={isRequired}
+                                                style={{
+                                                    backgroundColor: isDarkMode ? '#374151' : '#f3f4f6'
+                                                }}
+                                                suffix={isRequired ? <LockOutlined style={{ color: '#9ca3af' }} /> : null}
+                                            />
+                                        </Form.Item>
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'value']}
+                                            rules={[{
+                                                required: isRequired,
+                                                message: `${settingValue?.key || 'This field'} is required`
+                                            }]}
+                                            style={{ marginBottom: 0, flex: 2 }}
+                                        >
+                                            <Input
+                                                placeholder={isRequired ? `Enter ${settingValue?.key || 'value'} (Required)` : 'Value'}
+                                            />
+                                        </Form.Item>
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'required']}
+                                            valuePropName="checked"
+                                            style={{ marginBottom: 0 }}
+                                        >
+                                            <Checkbox
+                                                disabled={isRequired}
+                                                style={{ marginTop: 4 }}
+                                            >
+                                                <Text style={{ fontSize: 12, color: isDarkMode ? '#9ca3af' : '#6b7280' }}>
+                                                    Required
+                                                </Text>
+                                            </Checkbox>
+                                        </Form.Item>
+                                        {!isRequired && (
+                                            <Button
+                                                type="text"
+                                                danger
+                                                icon={<MinusCircleOutlined />}
+                                                onClick={() => remove(name)}
+                                            />
+                                        )}
+                                    </div>
+                                );
+                            })}
                             <Button
                                 type="dashed"
-                                onClick={() => add()}
+                                onClick={() => add({ key: '', value: '', required: false })}
                                 block
                                 icon={<PlusOutlined />}
                                 style={{
