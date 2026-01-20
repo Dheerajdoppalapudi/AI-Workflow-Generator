@@ -1,6 +1,6 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Layout, Spin, Menu, Avatar, Dropdown, Typography, Button, Divider } from 'antd';
+import { Layout, Spin, Menu, Avatar, Dropdown, Typography, Button, Divider, Tooltip } from 'antd';
 import {
   HomeOutlined,
   UserOutlined,
@@ -11,7 +11,9 @@ import {
   LogoutOutlined,
   DashboardOutlined,
   DeploymentUnitOutlined,
-  FolderOutlined
+  FolderOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined
 } from '@ant-design/icons';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { ThemeProvider, ThemeContext } from './context/ThemeContext';
@@ -143,82 +145,125 @@ const NavbarComponent = () => {
 };
 
 // Sidebar component
-const SidebarComponent = () => {
+const SidebarComponent = ({ collapsed, setCollapsed }) => {
   const { user } = useContext(AuthContext);
-  const { theme, getColor } = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const location = useLocation();
-  
+
   const isDarkMode = theme === 'dark';
+  const sidebarWidth = collapsed ? 80 : 220;
 
   // Updated sidebar styling for a more modern and minimalistic look
   const sidebarStyle = {
     background: isDarkMode ? '#181919' : 'rgba(255, 255, 255, 0.8)',
-    overflow: 'auto',
+    overflow: 'hidden',
     height: '100vh',
     position: 'fixed',
     left: 0,
     top: 64,
     borderRight: isDarkMode ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.06)',
-    zIndex: 1
+    zIndex: 1,
+    transition: 'all 0.3s ease'
   };
+
+  const menuItems = [
+    {
+      key: '/',
+      icon: <HomeOutlined />,
+      label: <Link to="/">Home</Link>,
+      title: 'Home'
+    }
+  ];
+
+  if (user) {
+    menuItems.push(
+      {
+        key: '/maindev',
+        icon: <DeploymentUnitOutlined />,
+        label: <Link to="/maindev">Main Dev</Link>,
+        title: 'Main Dev'
+      },
+      {
+        key: '/workflows',
+        icon: <FolderOutlined />,
+        label: <Link to="/workflows">My Workflows</Link>,
+        title: 'My Workflows'
+      },
+      {
+        key: '/profile',
+        icon: <UserOutlined />,
+        label: <Link to="/profile">Profile</Link>,
+        title: 'Profile'
+      }
+    );
+  }
+
+  if (user && user.role === 'admin') {
+    menuItems.push({
+      key: '/admin',
+      icon: <DashboardOutlined />,
+      label: <Link to="/admin">Admin Panel</Link>,
+      title: 'Admin Panel'
+    });
+  }
 
   return (
     <Sider
-      width={220}
+      width={sidebarWidth}
+      collapsedWidth={80}
+      collapsed={collapsed}
       style={sidebarStyle}
       theme={isDarkMode ? "dark" : "light"}
+      trigger={null}
     >
+      {/* Collapse Toggle Button */}
+      <div style={{
+        padding: '12px',
+        textAlign: collapsed ? 'center' : 'right',
+        borderBottom: isDarkMode ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.06)'
+      }}>
+        <Button
+          type="text"
+          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          onClick={() => setCollapsed(!collapsed)}
+          style={{
+            fontSize: '16px',
+            color: isDarkMode ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)'
+          }}
+        />
+      </div>
+
       <Menu
         mode="inline"
         selectedKeys={[location.pathname]}
-        style={{ 
-          borderRight: 0, 
-          height: 'calc(100% - 180px)',
+        inlineCollapsed={collapsed}
+        style={{
+          borderRight: 0,
+          height: 'calc(100% - 140px)',
           background: 'transparent',
           padding: '12px 0'
         }}
         theme={isDarkMode ? "dark" : "light"}
-      >
-        <Menu.ItemGroup key="main">
-          <Menu.Item key="/" icon={<HomeOutlined />}>
-            <Link to="/">Home</Link>
-          </Menu.Item>
+        items={menuItems.map(item => ({
+          key: item.key,
+          icon: collapsed ? (
+            <Tooltip title={item.title} placement="right">
+              {item.icon}
+            </Tooltip>
+          ) : item.icon,
+          label: item.label
+        }))}
+      />
 
-          {user && (
-            <>
-              <Menu.Item key="/maindev" icon={<DeploymentUnitOutlined />}>
-                <Link to="/maindev">Main Dev</Link>
-              </Menu.Item>
-
-              <Menu.Item key="/workflows" icon={<FolderOutlined />}>
-                <Link to="/workflows">My Workflows</Link>
-              </Menu.Item>
-
-              <Menu.Item key="/profile" icon={<UserOutlined />}>
-                <Link to="/profile">Profile</Link>
-              </Menu.Item>
-            </>
-          )}
-        </Menu.ItemGroup>
-
-        {user && user.role === 'admin' && (
-          <Menu.ItemGroup key="admin" title="Administration">
-            <Menu.Item key="/admin" icon={<DashboardOutlined />}>
-              <Link to="/admin">Admin Panel</Link>
-            </Menu.Item>
-          </Menu.ItemGroup>
-        )}
-      </Menu>
-
-      <div style={{ 
-        position: 'absolute', 
-        bottom: '16px', 
+      <div style={{
+        position: 'absolute',
+        bottom: '16px',
         width: '100%',
-        padding: '0 16px',
+        padding: collapsed ? '0 8px' : '0 16px',
         boxSizing: 'border-box',
         background: 'transparent'
       }}>
-        <Divider style={{ 
+        <Divider style={{
           margin: '8px 0',
           borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.06)'
         }} />
@@ -227,7 +272,7 @@ const SidebarComponent = () => {
             fontSize: '12px',
             color: isDarkMode ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.45)'
           }}>
-            BYOW v1.0.0
+            {collapsed ? 'v1.0' : 'BYOW v1.0.0'}
           </Text>
         </div>
       </div>
@@ -293,17 +338,19 @@ const AdminRoute = ({ children }) => {
 const AppContent = () => {
   const { user } = useContext(AuthContext);
   const { theme, getColor } = useContext(ThemeContext);
-  const isDarkMode = theme === 'dark';
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const sidebarWidth = sidebarCollapsed ? 80 : 220;
 
   return (
     <Router>
       <Layout style={{ minHeight: '100vh' }}>
         <NavbarComponent />
-        
-        {user && <SidebarComponent />}
-        
-        <Layout style={{ 
-          marginLeft: user ? 220 : 0, 
+
+        {user && <SidebarComponent collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />}
+
+        <Layout style={{
+          marginLeft: user ? sidebarWidth : 0,
           marginTop: 64,
           transition: 'all 0.3s ease',
           background: getColor('level00')
