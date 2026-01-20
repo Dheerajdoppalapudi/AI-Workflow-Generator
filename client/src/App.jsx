@@ -155,13 +155,13 @@ const SidebarComponent = ({ collapsed, setCollapsed }) => {
 
   // Updated sidebar styling for a more modern and minimalistic look
   const sidebarStyle = {
-    background: isDarkMode ? '#181919' : 'rgba(255, 255, 255, 0.8)',
+    background: isDarkMode ? '#161B22' : 'rgba(255, 255, 255, 0.8)',
     overflow: 'hidden',
     height: '100vh',
     position: 'fixed',
     left: 0,
     top: 64,
-    borderRight: isDarkMode ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.06)',
+    borderRight: isDarkMode ? '1px solid #30363D' : '1px solid rgba(0, 0, 0, 0.06)',
     zIndex: 1,
     transition: 'all 0.3s ease'
   };

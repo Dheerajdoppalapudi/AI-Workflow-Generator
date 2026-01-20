@@ -11,6 +11,11 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
     const [commonAgents, setCommonAgents] = useState([]);
     const [editingNode, setEditingNode] = useState(null);
 
+    // Execution mode: 'page' (default) or 'canvas'
+    const [executionMode, setExecutionMode] = useState('page');
+    // Node execution statuses: { nodeId: 'not_started' | 'in_progress' | 'completed' | 'error' }
+    const [nodeExecutionStatus, setNodeExecutionStatus] = useState({});
+
     // Refs to store handler functions to avoid stale closures
     const handleEditAgentRef = useRef(null);
     const handleDeleteAgentRef = useRef(null);
@@ -180,8 +185,10 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                 id: `edge-${conn.from}-${conn.to}`,
                 source: conn.from,
                 target: conn.to,
-                type: 'smoothstep',
-                style: { stroke: '#3b82f6', strokeWidth: 2 }
+                sourceHandle: 'right',
+                targetHandle: 'left',
+                type: 'default',
+                style: { stroke: '#94a3b8', strokeWidth: 2 }
             }));
 
             setNodes(initialNodes);
@@ -196,8 +203,8 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
     const onConnect = useCallback(
         (params) => setEdges((eds) => addEdge({
             ...params,
-            type: 'smoothstep',
-            style: { stroke: '#3b82f6', strokeWidth: 2 }
+            type: 'default',
+            style: { stroke: '#94a3b8', strokeWidth: 2 }
         }, eds)),
         [setEdges]
     );
@@ -506,8 +513,10 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                     id: `edge-${newNodes[0].id}-${newNodes[1].id}`,
                     source: newNodes[0].id,
                     target: newNodes[1].id,
-                    type: 'smoothstep',
-                    style: { stroke: '#3b82f6', strokeWidth: 2 }
+                    sourceHandle: 'right',
+                    targetHandle: 'left',
+                    type: 'default',
+                    style: { stroke: '#94a3b8', strokeWidth: 2 }
                 });
             }
             if (newNodes.length >= 3) {
@@ -515,8 +524,10 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                     id: `edge-${newNodes[1].id}-${newNodes[2].id}`,
                     source: newNodes[1].id,
                     target: newNodes[2].id,
-                    type: 'smoothstep',
-                    style: { stroke: '#3b82f6', strokeWidth: 2 }
+                    sourceHandle: 'right',
+                    targetHandle: 'left',
+                    type: 'default',
+                    style: { stroke: '#94a3b8', strokeWidth: 2 }
                 });
             }
 
@@ -559,6 +570,100 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
         onComplete(agentData);
         message.success('Proceeding with agent pipeline');
     }, [nodes, edges, onComplete, selectedTeam]);
+
+    // Topological sort to determine execution order
+    const getExecutionOrder = useCallback(() => {
+        const nodeIds = nodes.map(n => n.id);
+        const inDegree = {};
+        const adjacencyList = {};
+
+        // Initialize
+        nodeIds.forEach(id => {
+            inDegree[id] = 0;
+            adjacencyList[id] = [];
+        });
+
+        // Build adjacency list and count in-degrees
+        edges.forEach(edge => {
+            if (adjacencyList[edge.source]) {
+                adjacencyList[edge.source].push(edge.target);
+                inDegree[edge.target] = (inDegree[edge.target] || 0) + 1;
+            }
+        });
+
+        // Find nodes with no incoming edges
+        const queue = nodeIds.filter(id => inDegree[id] === 0);
+        const result = [];
+
+        while (queue.length > 0) {
+            const current = queue.shift();
+            result.push(current);
+
+            adjacencyList[current].forEach(neighbor => {
+                inDegree[neighbor]--;
+                if (inDegree[neighbor] === 0) {
+                    queue.push(neighbor);
+                }
+            });
+        }
+
+        return result;
+    }, [nodes, edges]);
+
+    // Start canvas execution
+    const startCanvasExecution = useCallback(() => {
+        if (nodes.length === 0) {
+            message.warning('Please add at least one agent to the canvas');
+            return;
+        }
+
+        const executionOrder = getExecutionOrder();
+        if (executionOrder.length === 0) {
+            message.error('Could not determine execution order');
+            return;
+        }
+
+        // Initialize all nodes to not_started
+        const initialStatus = {};
+        nodes.forEach(node => {
+            initialStatus[node.id] = 'not_started';
+        });
+
+        // Set first node to in_progress
+        initialStatus[executionOrder[0]] = 'in_progress';
+        setNodeExecutionStatus(initialStatus);
+
+        message.info('Canvas execution started. First agent is now in progress.');
+    }, [nodes, getExecutionOrder]);
+
+    // Update nodes with execution status when executionMode or nodeExecutionStatus changes
+    useEffect(() => {
+        if (executionMode === 'canvas') {
+            setNodes(nds => nds.map(node => ({
+                ...node,
+                data: {
+                    ...node.data,
+                    showExecutionStatus: true,
+                    executionStatus: nodeExecutionStatus[node.id] || 'not_started',
+                    onRun: () => {
+                        setNodeExecutionStatus(prev => ({
+                            ...prev,
+                            [node.id]: 'in_progress'
+                        }));
+                    }
+                }
+            })));
+        } else {
+            setNodes(nds => nds.map(node => ({
+                ...node,
+                data: {
+                    ...node.data,
+                    showExecutionStatus: false,
+                    executionStatus: undefined
+                }
+            })));
+        }
+    }, [executionMode, nodeExecutionStatus, setNodes]);
 
     const handleSaveWorkflow = useCallback(async (values, workflowForm) => {
         if (nodes.length === 0) {
@@ -620,6 +725,12 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
         editingNode,
         setEditingNode,
 
+        // Execution mode
+        executionMode,
+        setExecutionMode,
+        nodeExecutionStatus,
+        setNodeExecutionStatus,
+
         // Node/Edge handlers
         onNodesChange,
         onEdgesChange,
@@ -635,6 +746,10 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
         handleLoadSampleWorkflow,
         handleProceedToAgents,
         handleSaveWorkflow,
+
+        // Execution handlers
+        startCanvasExecution,
+        getExecutionOrder,
     };
 };
 

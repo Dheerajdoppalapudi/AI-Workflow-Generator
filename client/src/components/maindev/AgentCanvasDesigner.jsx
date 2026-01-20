@@ -4,7 +4,9 @@ import {
     MiniMap,
     Controls,
     Background,
-    Panel
+    Panel,
+    MarkerType,
+    ConnectionLineType
 } from 'reactflow';
 import {
     Typography,
@@ -12,14 +14,19 @@ import {
     Card,
     Space,
     Form,
-    Spin
+    Spin,
+    Switch,
+    Tooltip
 } from 'antd';
 import {
     PlusOutlined,
     SaveOutlined,
     PlayCircleOutlined,
     NodeIndexOutlined,
-    RobotOutlined
+    RobotOutlined,
+    ExpandOutlined,
+    CompressOutlined,
+    InfoCircleOutlined
 } from '@ant-design/icons';
 
 import 'reactflow/dist/style.css';
@@ -32,6 +39,22 @@ import useAgentCanvas from './canvas/useAgentCanvas';
 
 const { Title, Text } = Typography;
 
+// n8n-style edge options - smooth bezier curves with modern look
+const defaultEdgeOptions = {
+    type: 'default',
+    style: {
+        stroke: '#94a3b8',
+        strokeWidth: 2,
+        strokeLinecap: 'round'
+    },
+    markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: '#94a3b8',
+        width: 20,
+        height: 20
+    }
+};
+
 const AgentCanvasDesigner = ({ onComplete, isDarkMode, initialAgentData = null, selectedTeam = null, onAgentsUpdated = null }) => {
     // Modal/Drawer states
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,6 +62,9 @@ const AgentCanvasDesigner = ({ onComplete, isDarkMode, initialAgentData = null, 
     const [isSaveWorkflowModalOpen, setIsSaveWorkflowModalOpen] = useState(false);
     const [isTemplateDetailsModalOpen, setIsTemplateDetailsModalOpen] = useState(false);
     const [selectedTemplateForView, setSelectedTemplateForView] = useState(null);
+
+    // Maximized view state
+    const [isMaximized, setIsMaximized] = useState(false);
 
     // Forms
     const [form] = Form.useForm();
@@ -62,6 +88,9 @@ const AgentCanvasDesigner = ({ onComplete, isDarkMode, initialAgentData = null, 
         handleLoadSampleWorkflow,
         handleProceedToAgents,
         handleSaveWorkflow,
+        executionMode,
+        setExecutionMode,
+        startCanvasExecution
     } = useAgentCanvas({
         selectedTeam,
         onAgentsUpdated,
@@ -126,20 +155,57 @@ const AgentCanvasDesigner = ({ onComplete, isDarkMode, initialAgentData = null, 
         handleAddAgent(template, () => setIsTemplateDrawerOpen(false));
     }, [handleAddAgent]);
 
+    // Toggle maximized view
+    const toggleMaximized = useCallback(() => {
+        setIsMaximized(prev => !prev);
+    }, []);
+
+    // Handle execution mode toggle
+    const handleExecutionModeToggle = useCallback((checked) => {
+        setExecutionMode(checked ? 'canvas' : 'page');
+    }, [setExecutionMode]);
+
+    // Handle execute button click
+    const handleExecuteClick = useCallback(() => {
+        if (executionMode === 'canvas') {
+            startCanvasExecution();
+        } else {
+            handleProceedToAgents();
+        }
+    }, [executionMode, startCanvasExecution, handleProceedToAgents]);
+
+    // Container style for maximized/normal view
+    const containerStyle = isMaximized ? {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1000,
+        backgroundColor: isDarkMode ? '#171717' : '#fafafa',
+        borderRadius: 0,
+        border: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100vh'
+    } : {
+        height: '75vh',
+        backgroundColor: isDarkMode ? '#171717' : '#fafafa',
+        borderRadius: 6,
+        border: `1px solid ${isDarkMode ? '#404040' : '#e5e5e5'}`,
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        overflow: 'hidden'
+    };
+
     return (
-        <div style={{
-            height: '75vh',
-            backgroundColor: isDarkMode ? '#111827' : '#f9fafb',
-            borderRadius: 8,
-            border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
-            position: 'relative',
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%'
-        }}>
+        <div style={containerStyle}>
             {/* Header */}
             <div style={{
-                padding: '16px 24px',
+                padding: '12px 20px',
                 borderBottom: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
                 backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
                 flexShrink: 0
@@ -151,52 +217,94 @@ const AgentCanvasDesigner = ({ onComplete, isDarkMode, initialAgentData = null, 
                             color: isDarkMode ? '#f3f4f6' : '#1f2937',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 8
+                            gap: 8,
+                            fontSize: 16
                         }}>
                             <NodeIndexOutlined style={{ color: '#3b82f6' }} />
                             {selectedTeam ? `${selectedTeam.name} - Agent Pipeline` : 'Agent Canvas Designer'}
                         </Title>
-                        <Text style={{ color: isDarkMode ? '#9ca3af' : '#6b7280' }}>
+                        <Text style={{ color: isDarkMode ? '#9ca3af' : '#6b7280', fontSize: 12 }}>
                             {selectedTeam
-                                ? `Review and customize the ${selectedTeam.name} agent workflow`
+                                ? `Design and execute the ${selectedTeam.name} agent workflow`
                                 : 'Design your AI agent pipeline by adding and connecting agents'
                             }
                         </Text>
                     </div>
                     <Space>
+                        {/* Nodes Button */}
                         <Button
                             icon={<RobotOutlined />}
                             onClick={() => setIsTemplateDrawerOpen(true)}
-                            style={{ height: 32 }}
                         >
-                            Templates
+                            Nodes
                         </Button>
+
+                        {/* Add Agent Button */}
                         <Button
                             type="primary"
                             icon={<PlusOutlined />}
                             onClick={openAddAgentModal}
-                            style={{ height: 32 }}
                         >
                             Add Agent
                         </Button>
+
+                        {/* Save Workflow Button */}
                         <Button
                             icon={<SaveOutlined />}
                             onClick={() => setIsSaveWorkflowModalOpen(true)}
-                            style={{ height: 32 }}
                         >
-                            Save Workflow
+                            Save
                         </Button>
+
+                        {/* Execute Button with In-Canvas Toggle */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            backgroundColor: '#10b981',
+                            borderRadius: 6,
+                            padding: '0 6px 0 12px',
+                            height: 32
+                        }}>
+                            <Button
+                                type="text"
+                                icon={<PlayCircleOutlined />}
+                                onClick={handleExecuteClick}
+                                style={{
+                                    color: '#ffffff',
+                                    padding: '0 8px 0 0',
+                                    height: 'auto',
+                                    fontWeight: 500
+                                }}
+                            >
+                                Execute
+                            </Button>
+                            <div style={{
+                                borderLeft: '1px solid rgba(255,255,255,0.3)',
+                                paddingLeft: 8,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6
+                            }}>
+                                <Tooltip title="When enabled, agents execute directly on the canvas with visual status updates">
+                                    <InfoCircleOutlined style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }} />
+                                </Tooltip>
+                                <Switch
+                                    size="small"
+                                    checked={executionMode === 'canvas'}
+                                    onChange={handleExecutionModeToggle}
+                                    style={{
+                                        backgroundColor: executionMode === 'canvas' ? '#059669' : 'rgba(255,255,255,0.3)'
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Max/Min Button - Far Right */}
                         <Button
-                            type="primary"
-                            icon={<PlayCircleOutlined />}
-                            onClick={handleProceedToAgents}
-                            style={{
-                                backgroundColor: '#10b981',
-                                borderColor: '#10b981',
-                                height: 32
-                            }}
+                            icon={isMaximized ? <CompressOutlined /> : <ExpandOutlined />}
+                            onClick={toggleMaximized}
                         >
-                            Proceed
+                            {isMaximized ? 'Min' : 'Max'}
                         </Button>
                     </Space>
                 </div>
@@ -211,37 +319,54 @@ const AgentCanvasDesigner = ({ onComplete, isDarkMode, initialAgentData = null, 
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
                     nodeTypes={nodeTypes}
+                    defaultEdgeOptions={defaultEdgeOptions}
+                    connectionLineType={ConnectionLineType.Bezier}
+                    connectionLineStyle={{ stroke: '#94a3b8', strokeWidth: 2 }}
                     fitView
                     fitViewOptions={{
-                        padding: 0.2,
+                        padding: 0.3,
                         includeHiddenNodes: false,
                         minZoom: 0.5,
                         maxZoom: 1.5
                     }}
                     defaultViewport={{ x: 0, y: 0, zoom: 1 }}
                     style={{
-                        backgroundColor: isDarkMode ? '#111827' : '#f9fafb',
+                        backgroundColor: isDarkMode ? '#171717' : '#fafafa',
                         width: '100%',
                         height: '100%'
                     }}
+                    proOptions={{ hideAttribution: true }}
+                    snapToGrid={true}
+                    snapGrid={[15, 15]}
                 >
                     <Background
                         variant="dots"
-                        color={isDarkMode ? '#6b7280' : '#9ca3af'}
-                        gap={25}
-                        size={2}
+                        color={isDarkMode ? '#333333' : '#e5e5e5'}
+                        gap={15}
+                        size={1}
                     />
                     <Controls
                         style={{
-                            backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-                            border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`
+                            backgroundColor: isDarkMode ? '#262626' : '#ffffff',
+                            border: `1px solid ${isDarkMode ? '#404040' : '#e5e5e5'}`,
+                            borderRadius: 6,
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
                         }}
                     />
                     <MiniMap
                         style={{
-                            backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-                            border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`
+                            backgroundColor: isDarkMode ? '#262626' : '#ffffff',
+                            border: `1px solid ${isDarkMode ? '#404040' : '#e5e5e5'}`,
+                            borderRadius: 6,
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
                         }}
+                        nodeColor={(node) => {
+                            if (node.data?.executionStatus === 'completed') return '#22c55e';
+                            if (node.data?.executionStatus === 'in_progress') return '#3b82f6';
+                            if (node.data?.executionStatus === 'error') return '#ef4444';
+                            return isDarkMode ? '#525252' : '#d4d4d4';
+                        }}
+                        maskColor={isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.1)'}
                     />
 
                     {/* Instructions Panel - Empty State */}
@@ -249,56 +374,68 @@ const AgentCanvasDesigner = ({ onComplete, isDarkMode, initialAgentData = null, 
                         <Panel position="center">
                             <Card style={{
                                 textAlign: 'center',
-                                backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-                                border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`
+                                backgroundColor: isDarkMode ? '#262626' : '#ffffff',
+                                border: `1px solid ${isDarkMode ? '#404040' : '#e5e5e5'}`,
+                                borderRadius: 8,
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                                padding: '8px'
                             }}>
-                                <RobotOutlined style={{
-                                    fontSize: 48,
-                                    color: isDarkMode ? '#6b7280' : '#9ca3af',
-                                    marginBottom: 16
-                                }} />
-                                <Title level={4} style={{
-                                    color: isDarkMode ? '#f3f4f6' : '#1f2937',
-                                    marginBottom: 8
+                                <div style={{
+                                    width: 48,
+                                    height: 48,
+                                    borderRadius: 8,
+                                    backgroundColor: '#3b82f6',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    margin: '0 auto 16px'
                                 }}>
-                                    Start Building Your Agent Pipeline
+                                    <RobotOutlined style={{ fontSize: 24, color: '#ffffff' }} />
+                                </div>
+                                <Title level={5} style={{
+                                    color: isDarkMode ? '#fafafa' : '#171717',
+                                    marginBottom: 4,
+                                    fontWeight: 600
+                                }}>
+                                    Build Your Workflow
                                 </Title>
                                 <Text style={{
-                                    color: isDarkMode ? '#9ca3af' : '#6b7280',
+                                    color: isDarkMode ? '#a3a3a3' : '#737373',
                                     display: 'block',
-                                    marginBottom: 16
+                                    marginBottom: 20,
+                                    fontSize: 13
                                 }}>
-                                    Add agents to the canvas and connect them to create your workflow
+                                    Add agents and connect them to create a pipeline
                                 </Text>
                                 {selectedTeam ? (
-                                    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
                                         <Button
                                             type="primary"
                                             icon={<RobotOutlined />}
                                             onClick={() => setIsTemplateDrawerOpen(true)}
                                             block
+                                            style={{ borderRadius: 6 }}
                                         >
-                                            Choose Template
+                                            Add from Nodes
                                         </Button>
                                         <Button
-                                            type="dashed"
                                             icon={<NodeIndexOutlined />}
                                             onClick={handleLoadSampleWorkflow}
                                             block
                                             style={{
-                                                borderColor: '#3b82f6',
-                                                color: '#3b82f6'
+                                                borderRadius: 6,
+                                                borderColor: isDarkMode ? '#404040' : '#e5e5e5'
                                             }}
                                         >
-                                            Load Sample Workflow
+                                            Load Sample
                                         </Button>
                                     </Space>
                                 ) : (
                                     <Text style={{
-                                        color: isDarkMode ? '#9ca3af' : '#6b7280',
-                                        fontSize: 14
+                                        color: isDarkMode ? '#a3a3a3' : '#737373',
+                                        fontSize: 13
                                     }}>
-                                        Please select a team to start building your workflow
+                                        Select a team to start
                                     </Text>
                                 )}
                             </Card>
@@ -372,7 +509,7 @@ const AgentCanvasDesigner = ({ onComplete, isDarkMode, initialAgentData = null, 
                     alignItems: 'center',
                     justifyContent: 'center',
                     zIndex: 1000,
-                    borderRadius: 8
+                    borderRadius: isMaximized ? 0 : 8
                 }}>
                     <Spin size="large" style={{ marginBottom: 16 }} />
                     <div style={{

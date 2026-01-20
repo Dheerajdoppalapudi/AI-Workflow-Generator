@@ -1,122 +1,299 @@
 import React, { useContext } from 'react';
 import { Handle, Position } from 'reactflow';
-import { Typography, Button } from 'antd';
-import { RobotOutlined, SettingOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Typography, Button, Tooltip, Divider } from 'antd';
+import {
+    RobotOutlined,
+    EditOutlined,
+    DeleteOutlined,
+    PlayCircleOutlined,
+    ClockCircleOutlined,
+    LoadingOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    ThunderboltOutlined
+} from '@ant-design/icons';
 import { ThemeContext } from '../../../context/ThemeContext';
 
 const { Text } = Typography;
+
+// Execution status configuration
+const executionStatusConfig = {
+    not_started: {
+        color: '#6b7280',
+        bgColor: '#f3f4f6',
+        darkBgColor: '#374151',
+        icon: ClockCircleOutlined,
+        label: 'Not Started'
+    },
+    in_progress: {
+        color: '#3b82f6',
+        bgColor: '#dbeafe',
+        darkBgColor: '#1e3a5f',
+        icon: LoadingOutlined,
+        label: 'In Progress',
+        pulse: true
+    },
+    completed: {
+        color: '#10b981',
+        bgColor: '#d1fae5',
+        darkBgColor: '#064e3b',
+        icon: CheckCircleOutlined,
+        label: 'Completed'
+    },
+    error: {
+        color: '#ef4444',
+        bgColor: '#fee2e2',
+        darkBgColor: '#7f1d1d',
+        icon: CloseCircleOutlined,
+        label: 'Error'
+    }
+};
 
 const AgentNode = ({ data, selected }) => {
     const { theme } = useContext(ThemeContext);
     const isDarkMode = theme === 'dark';
 
-    return (
-        <div style={{
-            padding: '12px 16px',
-            borderRadius: 8,
-            backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-            border: `2px solid ${selected ? '#3b82f6' : (isDarkMode ? '#374151' : '#e5e7eb')}`,
-            boxShadow: selected
-                ? '0 4px 20px rgba(59, 130, 246, 0.3)'
-                : '0 2px 8px rgba(0, 0, 0, 0.1)',
-            minWidth: 200,
-            position: 'relative'
-        }}>
-            {/* Top Handle */}
-            <Handle
-                type="target"
-                position={Position.Top}
-                id="top"
-                style={{
-                    background: '#3b82f6',
-                    width: 8,
-                    height: 8,
-                    border: '2px solid #ffffff',
-                    top: -5
-                }}
-            />
+    const executionStatus = data.executionStatus || 'not_started';
+    const statusConfig = executionStatusConfig[executionStatus];
+    const StatusIcon = statusConfig.icon;
 
-            {/* Left Handle */}
+    // Check if this is a common agent (purple theme)
+    const isCommonAgent = data.isCommonAgent || false;
+
+    // Theme colors based on agent type
+    const themeColor = isCommonAgent ? '#8b5cf6' : '#3b82f6'; // Purple for common, Blue for regular
+    const themeGradient = isCommonAgent
+        ? 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)'
+        : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)';
+    const themeShadow = isCommonAgent
+        ? '0 2px 8px rgba(139, 92, 246, 0.3)'
+        : '0 2px 8px rgba(59, 130, 246, 0.3)';
+
+    // Handle double click to edit
+    const handleDoubleClick = (e) => {
+        e.stopPropagation();
+        data.onEdit?.();
+    };
+
+    return (
+        <div
+            onDoubleClick={handleDoubleClick}
+            style={{
+                minWidth: 260,
+                maxWidth: 300,
+                borderRadius: 12,
+                backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                border: `2px solid ${selected ? themeColor : (isDarkMode ? '#374151' : '#e5e7eb')}`,
+                boxShadow: selected
+                    ? `0 8px 25px ${isCommonAgent ? 'rgba(139, 92, 246, 0.25)' : 'rgba(59, 130, 246, 0.25)'}`
+                    : isDarkMode
+                        ? '0 4px 15px rgba(0, 0, 0, 0.3)'
+                        : '0 4px 15px rgba(0, 0, 0, 0.08)',
+                overflow: 'hidden',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer'
+            }}
+        >
+            {/* Execution Status Bar */}
+            {data.showExecutionStatus && (
+                <div style={{
+                    padding: '6px 12px',
+                    backgroundColor: isDarkMode ? statusConfig.darkBgColor : statusConfig.bgColor,
+                    borderBottom: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6
+                }}>
+                    <StatusIcon
+                        style={{
+                            color: statusConfig.color,
+                            fontSize: 12,
+                            animation: statusConfig.pulse ? 'pulse 1.5s infinite' : 'none'
+                        }}
+                        spin={executionStatus === 'in_progress'}
+                    />
+                    <Text style={{
+                        color: statusConfig.color,
+                        fontSize: 11,
+                        fontWeight: 500,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                    }}>
+                        {statusConfig.label}
+                    </Text>
+                </div>
+            )}
+
+            {/* Left Handle - INPUT (target) */}
             <Handle
                 type="target"
                 position={Position.Left}
                 id="left"
                 style={{
-                    background: '#3b82f6',
-                    width: 8,
-                    height: 8,
-                    border: '2px solid #ffffff'
+                    background: themeColor,
+                    width: 12,
+                    height: 12,
+                    border: '2px solid #ffffff',
+                    left: -7,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                 }}
             />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <RobotOutlined style={{
-                    color: '#3b82f6',
-                    fontSize: 16
-                }} />
-                <Text strong style={{
-                    color: isDarkMode ? '#f3f4f6' : '#1f2937',
-                    fontSize: 14
+            {/* Node Content */}
+            <div style={{ padding: '14px 16px' }}>
+                {/* Header with icon and name */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10
                 }}>
-                    {data.name}
+                    <div style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 10,
+                        background: themeGradient,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: themeShadow,
+                        flexShrink: 0
+                    }}>
+                        <RobotOutlined style={{ color: '#fff', fontSize: 20 }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <Text strong style={{
+                            color: isDarkMode ? '#f3f4f6' : '#1f2937',
+                            fontSize: 14,
+                            display: 'block',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}>
+                            {data.name}
+                        </Text>
+                        {isCommonAgent && (
+                            <Text style={{
+                                color: '#8b5cf6',
+                                fontSize: 10,
+                                fontWeight: 500,
+                                textTransform: 'uppercase'
+                            }}>
+                                Common Agent
+                            </Text>
+                        )}
+                    </div>
+                </div>
+
+                {/* Divider */}
+                <Divider style={{
+                    margin: '12px 0',
+                    borderColor: isDarkMode ? '#374151' : '#e5e7eb'
+                }} />
+
+                {/* Description */}
+                <Text style={{
+                    color: isDarkMode ? '#9ca3af' : '#6b7280',
+                    fontSize: 12,
+                    display: 'block',
+                    lineHeight: 1.5,
+                    minHeight: 36
+                }}>
+                    {data.description && data.description.length > 80
+                        ? `${data.description.substring(0, 80)}...`
+                        : data.description || 'No description'}
                 </Text>
+
+                {/* Action Buttons */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: 14,
+                    paddingTop: 12,
+                    borderTop: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`
+                }}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        {/* Edit Button */}
+                        <Button
+                            size="small"
+                            icon={<EditOutlined />}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                data.onEdit?.();
+                            }}
+                            style={{
+                                height: 30,
+                                paddingLeft: 10,
+                                paddingRight: 10,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                borderColor: isDarkMode ? '#4b5563' : '#d1d5db'
+                            }}
+                        >
+                            Edit
+                        </Button>
+
+                        {/* Execute Button */}
+                        <Button
+                            type="primary"
+                            size="small"
+                            icon={<ThunderboltOutlined />}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                data.onExecute?.();
+                            }}
+                            style={{
+                                height: 30,
+                                paddingLeft: 10,
+                                paddingRight: 10,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                backgroundColor: '#10b981',
+                                borderColor: '#10b981'
+                            }}
+                        >
+                            Execute
+                        </Button>
+                    </div>
+
+                    {/* Delete Button - Far Right */}
+                    <Tooltip title="Delete Agent">
+                        <Button
+                            size="small"
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                data.onDelete?.();
+                            }}
+                            style={{
+                                height: 30,
+                                width: 30,
+                                padding: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        />
+                    </Tooltip>
+                </div>
             </div>
 
-            <Text style={{
-                color: isDarkMode ? '#d1d5db' : '#6b7280',
-                fontSize: 12,
-                display: 'block',
-                marginBottom: 8
-            }}>
-                {data.description && data.description.length > 50
-                    ? `${data.description.substring(0, 50)}...`
-                    : data.description}
-            </Text>
-
-            <div style={{ display: 'flex', gap: 4 }}>
-                <Button
-                    size="small"
-                    icon={<SettingOutlined />}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        data.onEdit?.();
-                    }}
-                />
-                <Button
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    danger
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        data.onDelete?.();
-                    }}
-                />
-            </div>
-
-            {/* Right Handle */}
+            {/* Right Handle - OUTPUT (source) */}
             <Handle
                 type="source"
                 position={Position.Right}
                 id="right"
                 style={{
                     background: '#10b981',
-                    width: 8,
-                    height: 8,
-                    border: '2px solid #ffffff'
-                }}
-            />
-
-            {/* Bottom Handle */}
-            <Handle
-                type="source"
-                position={Position.Bottom}
-                id="bottom"
-                style={{
-                    background: '#10b981',
-                    width: 8,
-                    height: 8,
+                    width: 12,
+                    height: 12,
                     border: '2px solid #ffffff',
-                    bottom: -5
+                    right: -7,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                 }}
             />
         </div>
