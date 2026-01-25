@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNodesState, useEdgesState, addEdge } from 'reactflow';
 import { message } from 'antd';
-import { workflowServices, sdGenServices } from '../../../api/apiEndpoints';
+import { workflowServices, sdGenServices, executionServices } from '../../../api/apiEndpoints';
 
 export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData, onComplete, form, onOpenEditModal }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -611,7 +611,7 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
     }, [nodes, edges]);
 
     // Start canvas execution
-    const startCanvasExecution = useCallback(() => {
+    const startCanvasExecution = useCallback(async () => {
         if (nodes.length === 0) {
             message.warning('Please add at least one agent to the canvas');
             return;
@@ -628,13 +628,101 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
         nodes.forEach(node => {
             initialStatus[node.id] = 'not_started';
         });
-
-        // Set first node to in_progress
-        initialStatus[executionOrder[0]] = 'in_progress';
         setNodeExecutionStatus(initialStatus);
 
-        message.info('Canvas execution started. First agent is now in progress.');
-    }, [nodes, getExecutionOrder]);
+        message.info('Starting workflow execution...');
+
+        const token = localStorage.getItem('token');
+        let previousOutput = null;
+        const results = [];
+
+        // Execute nodes sequentially
+        for (let i = 0; i < executionOrder.length; i++) {
+            const nodeId = executionOrder[i];
+            const node = nodes.find(n => n.id === nodeId);
+
+            if (!node) continue;
+
+            // Update status to in_progress
+            setNodeExecutionStatus(prev => ({
+                ...prev,
+                [nodeId]: 'in_progress'
+            }));
+
+            try {
+                // Prepare node data for execution
+                const nodeData = {
+                    id: node.id,
+                    nodeId: node.id,
+                    name: node.data.name,
+                    description: node.data.description,
+                    prompt: node.data.prompt,
+                    settings: node.data.settings,
+                    isCommonAgent: node.data.isCommonAgent || false,
+                    commonAgentId: node.data.commonAgentId || null,
+                    category: node.data.category || null
+                };
+
+                const workflowContext = {
+                    teamId: selectedTeam?.id,
+                    previousResults: results,
+                    totalNodes: nodes.length,
+                    currentIndex: i
+                };
+
+                // Call the execution API
+                const result = await executionServices.executeNode(
+                    nodeData,
+                    previousOutput,
+                    workflowContext,
+                    token
+                );
+
+                if (result.success && result.data?.result?.success) {
+                    // Update status to completed
+                    setNodeExecutionStatus(prev => ({
+                        ...prev,
+                        [nodeId]: 'completed'
+                    }));
+
+                    previousOutput = result.data.result.output;
+                    results.push({
+                        nodeId,
+                        nodeName: node.data.name,
+                        ...result.data.result
+                    });
+
+                    message.success(`${node.data.name} completed`);
+                } else {
+                    // Update status to error
+                    setNodeExecutionStatus(prev => ({
+                        ...prev,
+                        [nodeId]: 'error'
+                    }));
+
+                    const errorMsg = result.data?.result?.error || result.error || 'Execution failed';
+                    message.error(`${node.data.name} failed: ${errorMsg}`);
+
+                    // Stop execution on error
+                    break;
+                }
+            } catch (error) {
+                // Update status to error
+                setNodeExecutionStatus(prev => ({
+                    ...prev,
+                    [nodeId]: 'error'
+                }));
+
+                message.error(`${node.data.name} failed: ${error.message}`);
+                break;
+            }
+        }
+
+        const allCompleted = Object.values(nodeExecutionStatus).every(s => s === 'completed');
+        if (allCompleted) {
+            message.success('Workflow execution completed successfully!');
+        }
+    }, [nodes, getExecutionOrder, selectedTeam, nodeExecutionStatus]);
 
     // Update nodes with execution status when executionMode or nodeExecutionStatus changes
     useEffect(() => {

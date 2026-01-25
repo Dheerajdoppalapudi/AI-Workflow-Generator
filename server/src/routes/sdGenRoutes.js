@@ -22,6 +22,10 @@ import {
   updateWorkflow,
   deleteWorkflow
 } from '../controllers/workflowController.js';
+import {
+  executeNode,
+  executeWorkflow
+} from '../controllers/executionController.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -57,5 +61,9 @@ router.delete('/workflows/:id', deleteWorkflow);
 
 // AI workflow generation route
 router.post('/generate-workflow', generateWorkflow);
+
+// Execution routes
+router.post('/execute/node', executeNode);
+router.post('/execute/workflow', executeWorkflow);
 
 export default router;

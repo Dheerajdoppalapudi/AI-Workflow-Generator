@@ -254,28 +254,49 @@ export const initializeCommonAgents = async (req, res) => {
         description: "Convert various file formats to PDF",
         prompt: "You are a PDF conversion agent. Convert documents, images, and other file formats to PDF. Ensure proper formatting, compression, and quality settings. Handle batch conversions and maintain document fidelity.",
         category: "File Conversion",
-        icon: "FilePdfOutlined"
+        icon: "FilePdfOutlined",
+        settings: JSON.stringify([
+          { key: "inputFile", label: "Input File", value: "", required: true, type: "file" },
+          { key: "outputFile", label: "Output PDF File Path", value: "", required: false, type: "string" },
+          { key: "quality", label: "Quality", value: "high", required: false, type: "select", options: ["low", "medium", "high"] }
+        ])
       },
       {
         name: "Word to PDF",
         description: "Convert Microsoft Word documents to PDF format",
         prompt: "You are a Word to PDF conversion agent. Convert .doc and .docx files to PDF format while preserving formatting, fonts, images, and layout. Handle headers, footers, and page numbering correctly.",
         category: "File Conversion",
-        icon: "FileWordOutlined"
+        icon: "FileWordOutlined",
+        settings: JSON.stringify([
+          { key: "inputFile", label: "Input Word File", value: "", required: true, type: "file", accept: ".doc,.docx" },
+          { key: "outputFile", label: "Output PDF File Path", value: "", required: false, type: "string" }
+        ])
       },
       {
         name: "Excel to CSV",
         description: "Convert Excel spreadsheets to CSV format",
         prompt: "You are an Excel to CSV conversion agent. Convert .xlsx and .xls files to CSV format. Handle multiple sheets, data formatting, and special characters. Ensure data integrity during conversion.",
         category: "File Conversion",
-        icon: "FileExcelOutlined"
+        icon: "FileExcelOutlined",
+        settings: JSON.stringify([
+          { key: "inputFile", label: "Input Excel File", value: "", required: true, type: "file", accept: ".xlsx,.xls" },
+          { key: "outputFile", label: "Output CSV File Path", value: "", required: false, type: "string" },
+          { key: "sheetName", label: "Sheet Name", value: "", required: false, type: "string", placeholder: "Leave empty for first sheet" },
+          { key: "delimiter", label: "Delimiter", value: ",", required: false, type: "string", placeholder: "Default: comma (,)" }
+        ])
       },
       {
         name: "Image Converter",
         description: "Convert images between different formats (PNG, JPG, WebP, etc.)",
         prompt: "You are an image conversion agent. Convert images between formats like PNG, JPG, WebP, GIF, and BMP. Handle compression, quality settings, resizing, and batch processing.",
         category: "File Conversion",
-        icon: "FileImageOutlined"
+        icon: "FileImageOutlined",
+        settings: JSON.stringify([
+          { key: "inputFile", label: "Input Image", value: "", required: true, type: "file", accept: ".png,.jpg,.jpeg,.webp,.gif,.bmp" },
+          { key: "outputFormat", label: "Output Format", value: "png", required: true, type: "select", options: ["png", "jpg", "webp", "gif", "bmp"] },
+          { key: "outputFile", label: "Output File Path", value: "", required: false, type: "string" },
+          { key: "quality", label: "Quality (1-100)", value: "85", required: false, type: "number" }
+        ])
       },
       // Data Processing
       {
@@ -283,21 +304,37 @@ export const initializeCommonAgents = async (req, res) => {
         description: "Validate and clean data against defined rules",
         prompt: "You are a data validation agent. Validate data against schema definitions, business rules, and format requirements. Identify and report errors, suggest corrections, and clean malformed data.",
         category: "Data Processing",
-        icon: "CheckCircleOutlined"
+        icon: "CheckCircleOutlined",
+        settings: JSON.stringify([
+          { key: "inputFile", label: "Input Data File", value: "", required: true, type: "file" },
+          { key: "schemaFile", label: "Schema File (optional)", value: "", required: false, type: "file" },
+          { key: "rules", label: "Validation Rules (JSON)", value: "", required: false, type: "textarea" }
+        ])
       },
       {
         name: "JSON Transformer",
         description: "Transform and manipulate JSON data structures",
         prompt: "You are a JSON transformation agent. Parse, transform, and restructure JSON data. Handle mapping between different schemas, filtering, aggregation, and format conversion.",
         category: "Data Processing",
-        icon: "CodeOutlined"
+        icon: "CodeOutlined",
+        settings: JSON.stringify([
+          { key: "inputFile", label: "Input JSON File", value: "", required: true, type: "file", accept: ".json" },
+          { key: "outputFile", label: "Output File Path", value: "", required: false, type: "string" },
+          { key: "transformation", label: "Transformation Rules (JSONPath/JMESPath)", value: "", required: false, type: "textarea" }
+        ])
       },
       {
         name: "CSV Parser",
         description: "Parse and process CSV files with various delimiters",
         prompt: "You are a CSV parsing agent. Read and process CSV files with different delimiters, encodings, and formats. Handle headers, data types, and large file processing efficiently.",
         category: "Data Processing",
-        icon: "TableOutlined"
+        icon: "TableOutlined",
+        settings: JSON.stringify([
+          { key: "inputFile", label: "Input CSV File", value: "", required: true, type: "file", accept: ".csv" },
+          { key: "delimiter", label: "Delimiter", value: ",", required: false, type: "string" },
+          { key: "hasHeader", label: "Has Header Row", value: "true", required: false, type: "boolean" },
+          { key: "encoding", label: "File Encoding", value: "utf-8", required: false, type: "select", options: ["utf-8", "ascii", "latin1", "utf-16"] }
+        ])
       },
       // Web & API
       {
@@ -352,28 +389,48 @@ export const initializeCommonAgents = async (req, res) => {
         description: "Summarize long text content into key points",
         prompt: "You are a text summarization agent. Analyze and summarize long documents, articles, or text content. Extract key points, maintain context, and provide concise summaries at various detail levels.",
         category: "Utilities",
-        icon: "FileTextOutlined"
+        icon: "FileTextOutlined",
+        settings: JSON.stringify([
+          { key: "inputText", label: "Text to Summarize", value: "", required: true, type: "textarea" },
+          { key: "maxLength", label: "Max Summary Length (words)", value: "100", required: false, type: "number" },
+          { key: "style", label: "Summary Style", value: "bullet", required: false, type: "select", options: ["bullet", "paragraph", "key-points"] }
+        ])
       },
       {
         name: "Language Translator",
         description: "Translate text between different languages",
         prompt: "You are a translation agent. Translate text between languages accurately while preserving meaning, tone, and context. Handle technical terms, idioms, and cultural nuances.",
         category: "Utilities",
-        icon: "TranslationOutlined"
+        icon: "TranslationOutlined",
+        settings: JSON.stringify([
+          { key: "inputText", label: "Text to Translate", value: "", required: true, type: "textarea" },
+          { key: "sourceLanguage", label: "Source Language", value: "auto", required: false, type: "string", placeholder: "auto-detect" },
+          { key: "targetLanguage", label: "Target Language", value: "", required: true, type: "string", placeholder: "e.g., Spanish, French" }
+        ])
       },
       {
         name: "Report Generator",
         description: "Generate formatted reports from data",
         prompt: "You are a report generation agent. Create formatted reports from raw data. Support multiple output formats (PDF, HTML, Markdown), charts, tables, and custom templates.",
         category: "Utilities",
-        icon: "BarChartOutlined"
+        icon: "BarChartOutlined",
+        settings: JSON.stringify([
+          { key: "inputData", label: "Input Data (JSON)", value: "", required: true, type: "textarea" },
+          { key: "outputFormat", label: "Output Format", value: "markdown", required: false, type: "select", options: ["pdf", "html", "markdown"] },
+          { key: "templateName", label: "Report Template", value: "default", required: false, type: "string" }
+        ])
       },
       {
         name: "Scheduler",
         description: "Schedule and manage timed tasks",
         prompt: "You are a scheduling agent. Manage scheduled tasks, cron jobs, and timed executions. Handle timezone conversions, recurring schedules, and execution logging.",
         category: "Utilities",
-        icon: "ClockCircleOutlined"
+        icon: "ClockCircleOutlined",
+        settings: JSON.stringify([
+          { key: "cronExpression", label: "Cron Expression", value: "", required: true, type: "string", placeholder: "e.g., 0 9 * * MON-FRI" },
+          { key: "timezone", label: "Timezone", value: "UTC", required: false, type: "string" },
+          { key: "taskDescription", label: "Task Description", value: "", required: false, type: "textarea" }
+        ])
       }
     ];
 

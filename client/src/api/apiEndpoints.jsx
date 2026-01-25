@@ -38,6 +38,8 @@ export const API_ENDPOINTS = {
     DELETE_WORKFLOW: `${BASE_URL}/sdgen/workflows`,
     GENERATE_WORKFLOW: `${BASE_URL}/sdgen/generate-workflow`,
     GET_COMMON_AGENTS: `${BASE_URL}/sdgen/common-agents`,
+    EXECUTE_NODE: `${BASE_URL}/sdgen/execute/node`,
+    EXECUTE_WORKFLOW: `${BASE_URL}/sdgen/execute/workflow`,
   }
 };
 
@@ -223,5 +225,24 @@ export const workflowServices = {
 
   generateWorkflow: async (userPrompt, teamId = null) => {
     return await apiRequest(API_ENDPOINTS.SDGEN.GENERATE_WORKFLOW, 'POST', { userPrompt, teamId });
+  }
+};
+
+// Execution services
+export const executionServices = {
+  executeNode: async (node, input = null, workflowContext = null, token = null) => {
+    return await apiRequest(API_ENDPOINTS.SDGEN.EXECUTE_NODE, 'POST', {
+      node,
+      input,
+      workflowContext
+    }, token);
+  },
+
+  executeWorkflow: async (nodes, edges, teamId = null, token = null) => {
+    return await apiRequest(API_ENDPOINTS.SDGEN.EXECUTE_WORKFLOW, 'POST', {
+      nodes,
+      edges,
+      teamId
+    }, token);
   }
 };
