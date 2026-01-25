@@ -41,135 +41,46 @@ export const AgentFormModal = ({
                 onFinish={onSave}
             >
                 {useThreeColumnLayout ? (
-                    // Three Column Layout for Edit Mode
+                    // Two Column Layout for Edit Mode: Left (Settings/Inputs/Outputs) | Right (Agent Config)
                     <div style={{ display: 'flex', gap: 16 }}>
-                        {/* Column 1: Input Section */}
+                        {/* Left Column: Settings, Inputs, Outputs */}
                         <div style={{
                             flex: 1,
-                            padding: 16,
-                            backgroundColor: isDarkMode ? '#1f2937' : '#f9fafb',
-                            borderRadius: 8,
-                            border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
                             display: 'flex',
-                            flexDirection: 'column'
+                            flexDirection: 'column',
+                            gap: 12
                         }}>
+                            {/* Settings Section */}
                             <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 8,
-                                marginBottom: 12
+                                padding: 16,
+                                backgroundColor: isDarkMode ? '#1f2937' : '#f9fafb',
+                                borderRadius: 8,
+                                border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`
                             }}>
                                 <div style={{
-                                    width: 28,
-                                    height: 28,
-                                    borderRadius: 6,
-                                    backgroundColor: '#3b82f6',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center'
+                                    gap: 8,
+                                    marginBottom: 12
                                 }}>
-                                    <LoginOutlined style={{ color: '#fff', fontSize: 14 }} />
-                                </div>
-                                <Text strong style={{ color: isDarkMode ? '#f3f4f6' : '#1f2937', fontSize: 14 }}>
-                                    Input
-                                </Text>
-                            </div>
-                            <Form.Item
-                                name="input"
-                                style={{ marginBottom: 0, flex: 1 }}
-                            >
-                                <TextArea
-                                    rows={18}
-                                    placeholder="Enter input for this agent..."
-                                    style={{
-                                        backgroundColor: isDarkMode ? '#111827' : '#ffffff',
-                                        border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                                    <div style={{
+                                        width: 28,
+                                        height: 28,
                                         borderRadius: 6,
-                                        resize: 'none',
-                                        height: '100%'
-                                    }}
-                                />
-                            </Form.Item>
-                        </div>
-
-                        {/* Column 2: Agent Configuration */}
-                        <div style={{
-                            flex: 1,
-                            padding: 16,
-                            backgroundColor: isDarkMode ? '#1f2937' : '#f9fafb',
-                            borderRadius: 8,
-                            border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
-                            display: 'flex',
-                            flexDirection: 'column'
-                        }}>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 8,
-                                marginBottom: 12
-                            }}>
-                                <div style={{
-                                    width: 28,
-                                    height: 28,
-                                    borderRadius: 6,
-                                    backgroundColor: '#8b5cf6',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    <RobotOutlined style={{ color: '#fff', fontSize: 14 }} />
+                                        backgroundColor: '#f59e0b',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        <SettingOutlined style={{ color: '#fff', fontSize: 14 }} />
+                                    </div>
+                                    <Text strong style={{ color: isDarkMode ? '#f3f4f6' : '#1f2937', fontSize: 14 }}>
+                                        Settings
+                                    </Text>
                                 </div>
-                                <Text strong style={{ color: isDarkMode ? '#f3f4f6' : '#1f2937', fontSize: 14 }}>
-                                    Agent Configuration
-                                </Text>
-                            </div>
-
-                            <div style={{ flex: 1, overflowY: 'auto' }}>
-                                <Form.Item
-                                    name="name"
-                                    label={<Text style={{ color: isDarkMode ? '#d1d5db' : '#374151', fontSize: 13 }}>Agent Name</Text>}
-                                    rules={[{ required: true, message: 'Please enter agent name' }]}
-                                    style={{ marginBottom: 12 }}
-                                >
-                                    <Input placeholder="e.g., Requirements Analyst" />
-                                </Form.Item>
-
-                                <Form.Item
-                                    name="description"
-                                    label={<Text style={{ color: isDarkMode ? '#d1d5db' : '#374151', fontSize: 13 }}>Description</Text>}
-                                    rules={[{ required: true, message: 'Please enter description' }]}
-                                    style={{ marginBottom: 12 }}
-                                >
-                                    <TextArea
-                                        rows={2}
-                                        placeholder="Describe what this agent does..."
-                                    />
-                                </Form.Item>
-
-                                <Form.Item
-                                    name="prompt"
-                                    label={<Text style={{ color: isDarkMode ? '#d1d5db' : '#374151', fontSize: 13 }}>Agent Prompt</Text>}
-                                    rules={[{ required: true, message: 'Please enter agent prompt' }]}
-                                    style={{ marginBottom: 12 }}
-                                >
-                                    <TextArea
-                                        rows={6}
-                                        placeholder="Enter the prompt that defines this agent's behavior..."
-                                    />
-                                </Form.Item>
-
-                                <Divider style={{ margin: '8px 0' }}>
-                                    <Space>
-                                        <SettingOutlined style={{ color: '#3b82f6', fontSize: 12 }} />
-                                        <Text style={{ color: isDarkMode ? '#9ca3af' : '#6b7280', fontSize: 12 }}>
-                                            Settings
-                                        </Text>
-                                    </Space>
-                                </Divider>
-
                                 <Form.List name="settings">
                                     {(fields, { add, remove }) => (
-                                        <div style={{ maxHeight: 100, overflowY: 'auto' }}>
+                                        <div style={{ maxHeight: 120, overflowY: 'auto' }}>
                                             {fields.map(({ key, name, ...restField }) => {
                                                 const settingValue = form.getFieldValue(['settings', name]);
                                                 const isRequired = settingValue?.required === true;
@@ -228,9 +139,109 @@ export const AgentFormModal = ({
                                     )}
                                 </Form.List>
                             </div>
+
+                            {/* Input Section */}
+                            <div style={{
+                                flex: 1,
+                                padding: 16,
+                                backgroundColor: isDarkMode ? '#1f2937' : '#f9fafb',
+                                borderRadius: 8,
+                                border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    marginBottom: 12
+                                }}>
+                                    <div style={{
+                                        width: 28,
+                                        height: 28,
+                                        borderRadius: 6,
+                                        backgroundColor: '#3b82f6',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        <LoginOutlined style={{ color: '#fff', fontSize: 14 }} />
+                                    </div>
+                                    <Text strong style={{ color: isDarkMode ? '#f3f4f6' : '#1f2937', fontSize: 14 }}>
+                                        Input
+                                    </Text>
+                                </div>
+                                <Form.Item
+                                    name="input"
+                                    style={{ marginBottom: 0, flex: 1 }}
+                                >
+                                    <TextArea
+                                        rows={6}
+                                        placeholder="Enter input for this agent..."
+                                        style={{
+                                            backgroundColor: isDarkMode ? '#111827' : '#ffffff',
+                                            border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                                            borderRadius: 6,
+                                            resize: 'none',
+                                            height: '100%'
+                                        }}
+                                    />
+                                </Form.Item>
+                            </div>
+
+                            {/* Output Section */}
+                            <div style={{
+                                flex: 1,
+                                padding: 16,
+                                backgroundColor: isDarkMode ? '#1f2937' : '#f9fafb',
+                                borderRadius: 8,
+                                border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    marginBottom: 12
+                                }}>
+                                    <div style={{
+                                        width: 28,
+                                        height: 28,
+                                        borderRadius: 6,
+                                        backgroundColor: '#10b981',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        <LogoutOutlined style={{ color: '#fff', fontSize: 14 }} />
+                                    </div>
+                                    <Text strong style={{ color: isDarkMode ? '#f3f4f6' : '#1f2937', fontSize: 14 }}>
+                                        Output
+                                    </Text>
+                                </div>
+                                <Form.Item
+                                    name="output"
+                                    style={{ marginBottom: 0, flex: 1 }}
+                                >
+                                    <TextArea
+                                        rows={6}
+                                        placeholder="Agent output will appear here after execution..."
+                                        readOnly
+                                        style={{
+                                            backgroundColor: isDarkMode ? '#111827' : '#ffffff',
+                                            border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                                            borderRadius: 6,
+                                            resize: 'none',
+                                            height: '100%',
+                                            color: isDarkMode ? '#d1d5db' : '#374151'
+                                        }}
+                                    />
+                                </Form.Item>
+                            </div>
                         </div>
 
-                        {/* Column 3: Output Section */}
+                        {/* Right Column: Agent Configuration */}
                         <div style={{
                             flex: 1,
                             padding: 16,
@@ -250,35 +261,52 @@ export const AgentFormModal = ({
                                     width: 28,
                                     height: 28,
                                     borderRadius: 6,
-                                    backgroundColor: '#10b981',
+                                    backgroundColor: '#8b5cf6',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center'
                                 }}>
-                                    <LogoutOutlined style={{ color: '#fff', fontSize: 14 }} />
+                                    <RobotOutlined style={{ color: '#fff', fontSize: 14 }} />
                                 </div>
                                 <Text strong style={{ color: isDarkMode ? '#f3f4f6' : '#1f2937', fontSize: 14 }}>
-                                    Output
+                                    Agent Configuration
                                 </Text>
                             </div>
-                            <Form.Item
-                                name="output"
-                                style={{ marginBottom: 0, flex: 1 }}
-                            >
-                                <TextArea
-                                    rows={18}
-                                    placeholder="Agent output will appear here after execution..."
-                                    readOnly
-                                    style={{
-                                        backgroundColor: isDarkMode ? '#111827' : '#ffffff',
-                                        border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
-                                        borderRadius: 6,
-                                        resize: 'none',
-                                        height: '100%',
-                                        color: isDarkMode ? '#d1d5db' : '#374151'
-                                    }}
-                                />
-                            </Form.Item>
+
+                            <div style={{ flex: 1, overflowY: 'auto' }}>
+                                <Form.Item
+                                    name="name"
+                                    label={<Text style={{ color: isDarkMode ? '#d1d5db' : '#374151', fontSize: 13 }}>Agent Name</Text>}
+                                    rules={[{ required: true, message: 'Please enter agent name' }]}
+                                    style={{ marginBottom: 12 }}
+                                >
+                                    <Input placeholder="e.g., Requirements Analyst" />
+                                </Form.Item>
+
+                                <Form.Item
+                                    name="description"
+                                    label={<Text style={{ color: isDarkMode ? '#d1d5db' : '#374151', fontSize: 13 }}>Description</Text>}
+                                    rules={[{ required: true, message: 'Please enter description' }]}
+                                    style={{ marginBottom: 12 }}
+                                >
+                                    <TextArea
+                                        rows={3}
+                                        placeholder="Describe what this agent does..."
+                                    />
+                                </Form.Item>
+
+                                <Form.Item
+                                    name="prompt"
+                                    label={<Text style={{ color: isDarkMode ? '#d1d5db' : '#374151', fontSize: 13 }}>Agent Prompt</Text>}
+                                    rules={[{ required: true, message: 'Please enter agent prompt' }]}
+                                    style={{ marginBottom: 0 }}
+                                >
+                                    <TextArea
+                                        rows={12}
+                                        placeholder="Enter the prompt that defines this agent's behavior..."
+                                    />
+                                </Form.Item>
+                            </div>
                         </div>
                     </div>
                 ) : (

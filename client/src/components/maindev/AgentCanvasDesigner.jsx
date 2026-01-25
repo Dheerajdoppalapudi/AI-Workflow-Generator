@@ -14,9 +14,7 @@ import {
     Card,
     Space,
     Form,
-    Spin,
-    Switch,
-    Tooltip
+    Spin
 } from 'antd';
 import {
     PlusOutlined,
@@ -25,8 +23,7 @@ import {
     NodeIndexOutlined,
     RobotOutlined,
     ExpandOutlined,
-    CompressOutlined,
-    InfoCircleOutlined
+    CompressOutlined
 } from '@ant-design/icons';
 
 import 'reactflow/dist/style.css';
@@ -55,7 +52,7 @@ const defaultEdgeOptions = {
     }
 };
 
-const AgentCanvasDesigner = ({ onComplete, isDarkMode, initialAgentData = null, selectedTeam = null, onAgentsUpdated = null }) => {
+const AgentCanvasDesigner = ({ isDarkMode, initialAgentData = null, selectedTeam = null, onAgentsUpdated = null }) => {
     // Modal/Drawer states
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isTemplateDrawerOpen, setIsTemplateDrawerOpen] = useState(false);
@@ -86,16 +83,12 @@ const AgentCanvasDesigner = ({ onComplete, isDarkMode, initialAgentData = null, 
         handleAddCommonAgent,
         handleSaveAgent,
         handleLoadSampleWorkflow,
-        handleProceedToAgents,
         handleSaveWorkflow,
-        executionMode,
-        setExecutionMode,
         startCanvasExecution
     } = useAgentCanvas({
         selectedTeam,
         onAgentsUpdated,
         initialAgentData,
-        onComplete,
         form,
         onOpenEditModal: () => setIsModalOpen(true)
     });
@@ -159,20 +152,6 @@ const AgentCanvasDesigner = ({ onComplete, isDarkMode, initialAgentData = null, 
     const toggleMaximized = useCallback(() => {
         setIsMaximized(prev => !prev);
     }, []);
-
-    // Handle execution mode toggle
-    const handleExecutionModeToggle = useCallback((checked) => {
-        setExecutionMode(checked ? 'canvas' : 'page');
-    }, [setExecutionMode]);
-
-    // Handle execute button click
-    const handleExecuteClick = useCallback(() => {
-        if (executionMode === 'canvas') {
-            startCanvasExecution();
-        } else {
-            handleProceedToAgents();
-        }
-    }, [executionMode, startCanvasExecution, handleProceedToAgents]);
 
     // Container style for maximized/normal view
     const containerStyle = isMaximized ? {
@@ -256,48 +235,18 @@ const AgentCanvasDesigner = ({ onComplete, isDarkMode, initialAgentData = null, 
                             Save
                         </Button>
 
-                        {/* Execute Button with In-Canvas Toggle */}
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            backgroundColor: '#10b981',
-                            borderRadius: 6,
-                            padding: '0 6px 0 12px',
-                            height: 32
-                        }}>
-                            <Button
-                                type="text"
-                                icon={<PlayCircleOutlined />}
-                                onClick={handleExecuteClick}
-                                style={{
-                                    color: '#ffffff',
-                                    padding: '0 8px 0 0',
-                                    height: 'auto',
-                                    fontWeight: 500
-                                }}
-                            >
-                                Execute
-                            </Button>
-                            <div style={{
-                                borderLeft: '1px solid rgba(255,255,255,0.3)',
-                                paddingLeft: 8,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 6
-                            }}>
-                                <Tooltip title="When enabled, agents execute directly on the canvas with visual status updates">
-                                    <InfoCircleOutlined style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }} />
-                                </Tooltip>
-                                <Switch
-                                    size="small"
-                                    checked={executionMode === 'canvas'}
-                                    onChange={handleExecutionModeToggle}
-                                    style={{
-                                        backgroundColor: executionMode === 'canvas' ? '#059669' : 'rgba(255,255,255,0.3)'
-                                    }}
-                                />
-                            </div>
-                        </div>
+                        {/* Execute Button */}
+                        <Button
+                            type="primary"
+                            icon={<PlayCircleOutlined />}
+                            onClick={startCanvasExecution}
+                            style={{
+                                backgroundColor: '#10b981',
+                                borderColor: '#10b981'
+                            }}
+                        >
+                            Execute
+                        </Button>
 
                         {/* Max/Min Button - Far Right */}
                         <Button

@@ -13,8 +13,6 @@ import {
   initializeTeamsAndAgents,
   initializeCommonAgents
 } from '../controllers/seedingDataController.js';
-import { processRequirements, enhanceRequirements } from '../controllers/requirementController.js';
-import { generateInitialPlanning } from '../controllers/planningController.js';
 import {
   createWorkflow,
   getWorkflowsByUser,
@@ -26,18 +24,8 @@ import {
   executeNode,
   executeWorkflow
 } from '../controllers/executionController.js';
-import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
-
-
-
-// Requirement routes
-router.post('/requirements/process', authenticate, processRequirements);
-router.post('/requirements/enhance', authenticate, enhanceRequirements);
-
-// Planning routes
-router.post('/planning/initialplanning', authenticate, generateInitialPlanning);
 
 // Team and agent routes (temporarily without authentication for testing)
 router.get('/teams', getTeams);

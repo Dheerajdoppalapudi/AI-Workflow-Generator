@@ -27,9 +27,6 @@ export const API_ENDPOINTS = {
     CREATE_AGENT: `${BASE_URL}/sdgen/agents`,
     UPDATE_AGENT: `${BASE_URL}/sdgen/agents`,
     DELETE_AGENT: `${BASE_URL}/sdgen/agents`,
-    PROCESS_REQUIREMENTS: `${BASE_URL}/sdgen/requirements/process`,
-    ENHANCE_REQUIREMENTS: `${BASE_URL}/sdgen/requirements/enhance`,
-    INITIAL_PLANNING: `${BASE_URL}/sdgen/planning/initialplanning`,
     INITIALIZE: `${BASE_URL}/sdgen/initialize`,
     CREATE_WORKFLOW: `${BASE_URL}/sdgen/workflows`,
     GET_WORKFLOWS: `${BASE_URL}/sdgen/workflows`,
@@ -146,20 +143,6 @@ export const sdGenServices = {
     return await apiRequest(`${API_ENDPOINTS.SDGEN.DELETE_AGENT}/${agentId}`, 'DELETE', null, token);
   },
 
-  processRequirements: async (formData, token) => {
-    const headers = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(API_ENDPOINTS.SDGEN.PROCESS_REQUIREMENTS, {
-      method: 'POST',
-      headers,
-      body: formData
-    });
-    return await response.json();
-  },
-
   initialize: async () => {
     const response = await fetch(API_ENDPOINTS.SDGEN.INITIALIZE, {
       method: 'POST'
@@ -170,34 +153,6 @@ export const sdGenServices = {
   getCommonAgents: async () => {
     const response = await fetch(API_ENDPOINTS.SDGEN.GET_COMMON_AGENTS);
     return await response.json();
-  }
-};
-
-// Requirements services
-export const requirementServices = {
-  processRequirements: async (formData, token) => {
-    const headers = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(API_ENDPOINTS.SDGEN.PROCESS_REQUIREMENTS, {
-      method: 'POST',
-      headers,
-      body: formData
-    });
-    return await response.json();
-  },
-
-  enhanceRequirements: async (data, token) => {
-    return await apiRequest(API_ENDPOINTS.SDGEN.ENHANCE_REQUIREMENTS, 'POST', data, token);
-  }
-};
-
-// Planning services
-export const planningServices = {
-  generateInitialPlanning: async (data, token) => {
-    return await apiRequest(API_ENDPOINTS.SDGEN.INITIAL_PLANNING, 'POST', data, token);
   }
 };
 

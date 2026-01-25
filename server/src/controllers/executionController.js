@@ -29,9 +29,12 @@ export const executeNode = async (req, res) => {
 
     // Check if this is a common agent (pre-defined node)
     if (node.isCommonAgent && node.commonAgentId) {
+      console.log("Commom agent")
       result = await executeCommonAgent(node, input);
     } else {
-      // It's an AI agent - call the AI service
+      // It's an AI agent - call 
+      console.log("AI agent")
+      // the AI service
       result = await executeAIAgent(node, input, workflowContext);
     }
 
@@ -92,6 +95,7 @@ const executeCommonAgent = async (node, input) => {
     console.log('Executing common agent:', commonAgent.name);
     console.log('Identifier:', identifier);
     console.log('Settings:', settings);
+    console.log('inputs:', input);
 
     // Execute the node
     const result = await executable.execute(input, settings);

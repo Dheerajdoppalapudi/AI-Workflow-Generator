@@ -3,7 +3,7 @@ import { useNodesState, useEdgesState, addEdge } from 'reactflow';
 import { message } from 'antd';
 import { workflowServices, sdGenServices, executionServices } from '../../../api/apiEndpoints';
 
-export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData, onComplete, form, onOpenEditModal }) => {
+export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData, form, onOpenEditModal }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -11,8 +11,6 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
     const [commonAgents, setCommonAgents] = useState([]);
     const [editingNode, setEditingNode] = useState(null);
 
-    // Execution mode: 'page' (default) or 'canvas'
-    const [executionMode, setExecutionMode] = useState('page');
     // Node execution statuses: { nodeId: 'not_started' | 'in_progress' | 'completed' | 'error' }
     const [nodeExecutionStatus, setNodeExecutionStatus] = useState({});
 
@@ -176,6 +174,11 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                     settings: parseSettings(agent.settings),
                     dbId: agent.dbId,
                     nodeId: agent.id,
+                    // Restore node type information
+                    isCommonAgent: agent.isCommonAgent || false,
+                    commonAgentId: agent.commonAgentId || null,
+                    category: agent.category || null,
+                    nodeType: agent.isCommonAgent ? 'commonAgent' : 'AIAgent',
                     onEdit: () => onEditAgent(agent.id),
                     onDelete: () => onDeleteAgent(agent.id)
                 }
@@ -240,6 +243,10 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                             prompt: template.prompt,
                             settings: templateSettings,
                             dbId: template.id,
+                            isCommonAgent: false,
+                            commonAgentId: null,
+                            category: null,
+                            nodeType: 'AIAgent',
                             onEdit: () => onEditAgent(nodeId),
                             onDelete: () => onDeleteAgent(nodeId)
                         }
@@ -273,6 +280,10 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                                 prompt: template.prompt,
                                 settings: templateSettings,
                                 dbId: result.data.agent.id,
+                                isCommonAgent: false,
+                                commonAgentId: null,
+                                category: null,
+                                nodeType: 'AIAgent',
                                 onEdit: () => onEditAgent(nodeId),
                                 onDelete: () => onDeleteAgent(nodeId)
                             }
@@ -315,6 +326,7 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                 isCommonAgent: true,
                 commonAgentId: commonAgent.id,
                 category: commonAgent.category,
+                nodeType: 'commonAgent',
                 onEdit: () => onEditAgent(nodeId),
                 onDelete: () => onDeleteAgent(nodeId)
             }
@@ -358,6 +370,11 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                     prompt: values.prompt,
                     settings: settings,
                     dbId: dbId,
+                    // Preserve common agent properties when editing
+                    isCommonAgent: editingNode.data.isCommonAgent || false,
+                    commonAgentId: editingNode.data.commonAgentId || null,
+                    category: editingNode.data.category || null,
+                    nodeType: editingNode.data.isCommonAgent ? 'commonAgent' : 'AIAgent',
                     onEdit: () => onEditAgent(editingNode.id),
                     onDelete: () => onDeleteAgent(editingNode.id)
                 };
@@ -392,6 +409,10 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                         prompt: values.prompt,
                         settings: settings,
                         dbId: result.data.agent.id,
+                        isCommonAgent: false,
+                        commonAgentId: null,
+                        category: null,
+                        nodeType: 'AIAgent',
                         onEdit: () => onEditAgent(nodeId),
                         onDelete: () => onDeleteAgent(nodeId)
                     };
@@ -501,6 +522,10 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                         description: agent.description,
                         prompt: agent.prompt,
                         dbId: agent.dbId,
+                        isCommonAgent: false,
+                        commonAgentId: null,
+                        category: null,
+                        nodeType: 'AIAgent',
                         onEdit: () => onEditAgent(nodeId),
                         onDelete: () => onDeleteAgent(nodeId)
                     }
@@ -543,33 +568,6 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
             setIsLoading(false);
         }
     }, [selectedTeam, setNodes, setEdges, onEditAgent, onDeleteAgent, refreshAgentsList]);
-
-    const handleProceedToAgents = useCallback(() => {
-        if (nodes.length === 0) {
-            message.warning('Please add at least one agent to the canvas');
-            return;
-        }
-
-        const agentData = {
-            teamId: selectedTeam?.id || null,
-            agents: nodes.map((node) => ({
-                id: node.id,
-                name: node.data.name,
-                description: node.data.description,
-                prompt: node.data.prompt,
-                settings: node.data.settings || [],
-                position: node.position,
-                dbId: node.data.dbId
-            })),
-            connections: edges.map(edge => ({
-                from: edge.source,
-                to: edge.target
-            }))
-        };
-
-        onComplete(agentData);
-        message.success('Proceeding with agent pipeline');
-    }, [nodes, edges, onComplete, selectedTeam]);
 
     // Topological sort to determine execution order
     const getExecutionOrder = useCallback(() => {
@@ -660,7 +658,8 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                     settings: node.data.settings,
                     isCommonAgent: node.data.isCommonAgent || false,
                     commonAgentId: node.data.commonAgentId || null,
-                    category: node.data.category || null
+                    category: node.data.category || null,
+                    nodeType: node.data.isCommonAgent ? 'commonAgent' : 'AIAgent'
                 };
 
                 const workflowContext = {
@@ -724,34 +723,21 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
         }
     }, [nodes, getExecutionOrder, selectedTeam, nodeExecutionStatus]);
 
-    // Update nodes with execution status when executionMode or nodeExecutionStatus changes
+    // Update nodes with execution status when nodeExecutionStatus changes
     useEffect(() => {
-        if (executionMode === 'canvas') {
+        // Only update if there are actual status changes (during execution)
+        const hasStatus = Object.keys(nodeExecutionStatus).length > 0;
+        if (hasStatus) {
             setNodes(nds => nds.map(node => ({
                 ...node,
                 data: {
                     ...node.data,
                     showExecutionStatus: true,
-                    executionStatus: nodeExecutionStatus[node.id] || 'not_started',
-                    onRun: () => {
-                        setNodeExecutionStatus(prev => ({
-                            ...prev,
-                            [node.id]: 'in_progress'
-                        }));
-                    }
-                }
-            })));
-        } else {
-            setNodes(nds => nds.map(node => ({
-                ...node,
-                data: {
-                    ...node.data,
-                    showExecutionStatus: false,
-                    executionStatus: undefined
+                    executionStatus: nodeExecutionStatus[node.id] || 'not_started'
                 }
             })));
         }
-    }, [executionMode, nodeExecutionStatus, setNodes]);
+    }, [nodeExecutionStatus, setNodes]);
 
     const handleSaveWorkflow = useCallback(async (values, workflowForm) => {
         if (nodes.length === 0) {
@@ -770,7 +756,12 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
                     prompt: node.data.prompt,
                     settings: node.data.settings || [],
                     position: node.position,
-                    dbId: node.data.dbId
+                    dbId: node.data.dbId,
+                    // Include node type information
+                    isCommonAgent: node.data.isCommonAgent || false,
+                    commonAgentId: node.data.commonAgentId || null,
+                    category: node.data.category || null,
+                    nodeType: node.data.isCommonAgent ? 'commonAgent' : 'AIAgent'
                 })),
                 connections: edges.map(edge => ({
                     from: edge.source,
@@ -813,12 +804,6 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
         editingNode,
         setEditingNode,
 
-        // Execution mode
-        executionMode,
-        setExecutionMode,
-        nodeExecutionStatus,
-        setNodeExecutionStatus,
-
         // Node/Edge handlers
         onNodesChange,
         onEdgesChange,
@@ -832,7 +817,6 @@ export const useAgentCanvas = ({ selectedTeam, onAgentsUpdated, initialAgentData
         handleSaveAgent,
         handleDeleteAgent,
         handleLoadSampleWorkflow,
-        handleProceedToAgents,
         handleSaveWorkflow,
 
         // Execution handlers

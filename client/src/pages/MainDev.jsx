@@ -1,33 +1,14 @@
-import { useContext, useState, useEffect, useCallback } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
-import { Modal, message } from 'antd';
+import { message } from 'antd';
 import { sdGenServices, workflowServices } from '../api/apiEndpoints';
-import {
-    FileTextOutlined,
-    ProjectOutlined,
-    SketchOutlined,
-    CodeOutlined,
-    BugOutlined,
-    RocketOutlined
-} from '@ant-design/icons';
 
 // Component imports
 import MainDevHeader from '../components/maindev/MainDevHeader';
-import ProgressStepper from '../components/maindev/ProgressStepper';
-import TeamAgentView from '../components/maindev/TeamAgentView';
 import EmptyState from '../components/maindev/EmptyState';
 import AgentCanvasDesigner from '../components/maindev/AgentCanvasDesigner';
-import AgentPipelineView from '../components/maindev/AgentPipelineView';
 import AIChatSidebar from '../components/maindev/AIChatSidebar';
-
-// Agent component imports
-import RequirementAnalysis from '../components/maindev/RequirementAnalysis';
-import PlanningAgent from '../components/maindev/AgentTemplates/PlanningAgent';
-import DesignAgent from '../components/maindev/AgentTemplates/DesignAgent';
-import DevelopmentAgent from '../components/maindev/AgentTemplates/DevelopmentAgent';
-import TestingAgent from '../components/maindev/AgentTemplates/TestingAgent';
-import CICDAgent from '../components/maindev/AgentTemplates/CICDAgent';
 
 const MainDev = () => {
     const { theme } = useContext(ThemeContext);
@@ -35,21 +16,10 @@ const MainDev = () => {
     const isDarkMode = theme === 'dark';
 
     // Core state
-    const [viewMode, setViewMode] = useState('team'); // 'team', 'canvas', 'pipeline'
     const [teams, setTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [teamsLoading, setTeamsLoading] = useState(true);
     const [loading, setLoading] = useState(false);
-
-    // Team-based agent execution state
-    const [agents, setAgents] = useState([]);
-    const [currentStep, setCurrentStep] = useState(0);
-    const [completedSteps, setCompletedSteps] = useState([]);
-    const [showCompleteModal, setShowCompleteModal] = useState(false);
-    const [agentData, setAgentData] = useState({
-        enhancedDescription: null,
-        planningData: null
-    });
 
     // Custom agent pipeline state
     const [customAgentData, setCustomAgentData] = useState(null);
@@ -57,30 +27,6 @@ const MainDev = () => {
 
     // AI Chat sidebar state
     const [isChatOpen, setIsChatOpen] = useState(false);
-
-    // Component mapping helpers
-    const getAgentComponent = (agentName) => {
-        const lowerName = agentName.toLowerCase();
-        if (lowerName.includes('requirement')) return RequirementAnalysis;
-        if (lowerName.includes('planning')) return PlanningAgent;
-        if (lowerName.includes('design')) return DesignAgent;
-        if (lowerName.includes('development')) return DevelopmentAgent;
-        if (lowerName.includes('testing')) return TestingAgent;
-        if (lowerName.includes('ci/cd') || lowerName.includes('cicd')) return CICDAgent;
-        return RequirementAnalysis;
-    };
-
-    const getAgentIcon = (iconName) => {
-        const iconMap = {
-            'FileTextOutlined': FileTextOutlined,
-            'ProjectOutlined': ProjectOutlined,
-            'SketchOutlined': SketchOutlined,
-            'CodeOutlined': CodeOutlined,
-            'BugOutlined': BugOutlined,
-            'RocketOutlined': RocketOutlined,
-        };
-        return iconMap[iconName] || FileTextOutlined;
-    };
 
     // API handlers
     useEffect(() => {
@@ -115,7 +61,6 @@ const MainDev = () => {
 
                 // Set workflow data to populate canvas
                 setCustomAgentData(workflowData);
-                setViewMode('canvas');
                 setWorkflowLoaded(true);
                 message.success(`Loaded workflow: ${workflow.name}`);
             } catch (error) {
@@ -143,136 +88,11 @@ const MainDev = () => {
         }
     };
 
-    const fetchAgents = async (teamId) => {
-        setLoading(true);
-        try {
-            const data = await sdGenServices.getAgentsByTeam(teamId);
-
-            if (data.success) {
-                const processedAgents = data.agents.map((agent, index) => ({
-                    key: agent.name.toLowerCase().replace(/\s+/g, '_'),
-                    title: agent.name,
-                    component: getAgentComponent(agent.name),
-                    description: agent.description,
-                    icon: getAgentIcon(agent.icon),
-                    order: agent.order || index
-                }));
-                setAgents(processedAgents);
-
-                // Convert team agents to canvas format for potential canvas use
-                const canvasAgents = data.agents.map((agent, index) => ({
-                    id: `agent-${agent.name.toLowerCase().replace(/\s+/g, '-')}`,
-                    name: agent.name,
-                    description: agent.description,
-                    prompt: agent.prompt || `You are a ${agent.name.toLowerCase()}. ${agent.description}`,
-                    dbId: agent.id, // Store database ID
-                    position: { x: index * 350 + 150, y: 150 },
-                    order: agent.order || index
-                }));
-
-                const connections = canvasAgents.slice(0, -1).map((agent, index) => ({
-                    from: agent.id,
-                    to: canvasAgents[index + 1].id
-                }));
-
-                setCustomAgentData({
-                    agents: canvasAgents,
-                    connections: connections
-                });
-
-                setCurrentStep(0);
-                setCompletedSteps([]);
-            } else {
-                message.error('Failed to load agents');
-            }
-        } catch (error) {
-            console.error('Error fetching agents:', error);
-            message.error('Failed to load agents');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     // Event handlers
     const handleTeamSelect = (teamId) => {
         const team = teams.find(t => t.id === teamId);
         setSelectedTeam(team);
         setCustomAgentData(null); // Start with empty canvas
-        setViewMode('canvas'); // Go to canvas view
-    };
-
-    const handleCustomAgents = () => {
-        setViewMode('canvas');
-        setCustomAgentData(null); // Start with empty canvas
-    };
-
-    const handleCanvasComplete = (agentData) => {
-        setCustomAgentData(agentData);
-
-        // Convert canvas agent data back to traditional agent format
-        if (agentData && agentData.agents) {
-            const processedAgents = agentData.agents.map((agent, index) => ({
-                key: agent.name.toLowerCase().replace(/\s+/g, '_'),
-                title: agent.name,
-                component: getAgentComponent(agent.name),
-                description: agent.description,
-                icon: getAgentIcon('FileTextOutlined'), // Default icon for canvas agents
-                order: agent.order || index
-            }));
-            setAgents(processedAgents);
-            setCurrentStep(0);
-            setCompletedSteps([]);
-        }
-
-        setViewMode('team'); // Go to traditional agent view
-    };
-
-    const handleBackToCanvas = () => {
-        setViewMode('canvas');
-    };
-
-
-    const handleStepClick = (index) => {
-        const maxAccessibleStep = Math.max(...completedSteps, -1) + 1;
-        if (index <= maxAccessibleStep) {
-            setCurrentStep(index);
-        }
-    };
-
-    const handleCompleteStep = () => {
-        setShowCompleteModal(true);
-    };
-
-    const confirmCompleteStep = () => {
-        if (!completedSteps.includes(currentStep)) {
-            setCompletedSteps(prev => [...prev, currentStep]);
-        }
-        setShowCompleteModal(false);
-
-        const isLastStep = currentStep === agents.length - 1;
-        if (!isLastStep) {
-            setTimeout(() => {
-                setCurrentStep(currentStep + 1);
-            }, 500);
-        }
-    };
-
-    const handleAgentComplete = (data) => {
-        if (data) {
-            setAgentData(prev => ({ ...prev, ...data }));
-        }
-    };
-
-    const handleNext = () => {
-        if (currentStep < agents.length - 1) {
-            setCurrentStep(currentStep + 1);
-        }
-    };
-
-    const handlePrevious = () => {
-        if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
-        }
     };
 
     const handleGenerateWorkflow = async (userPrompt) => {
@@ -314,11 +134,6 @@ const MainDev = () => {
         }
     };
 
-    // Computed values
-    const currentAgent = agents[currentStep];
-    const isCurrentStepCompleted = completedSteps.includes(currentStep);
-    const isLastStep = currentStep === agents.length - 1;
-
     return (
         <div style={{
             minHeight: '100vh',
@@ -327,121 +142,33 @@ const MainDev = () => {
             {/* Header */}
             <MainDevHeader
                 isDarkMode={isDarkMode}
-                viewMode={viewMode}
                 selectedTeam={selectedTeam}
                 teams={teams}
                 teamsLoading={teamsLoading}
                 onTeamSelect={handleTeamSelect}
-                onCustomAgents={handleCustomAgents}
             />
 
-            {/* Progress Stepper - Only for team mode */}
-            {viewMode === 'team' && agents.length > 0 && (
-                <ProgressStepper
-                    agents={agents}
-                    currentStep={currentStep}
-                    completedSteps={completedSteps}
-                    isDarkMode={isDarkMode}
-                    onStepClick={handleStepClick}
-                />
-            )}
-
             {/* Canvas Designer View - Full Width */}
-            {viewMode === 'canvas' && (
-                <div style={{
-                    padding: '16px 24px 24px 24px'
-                }}>
-                    {loading ? (
-                        <EmptyState
-                            type="loading"
-                            isDarkMode={isDarkMode}
-                            teamName={selectedTeam?.name || 'agents'}
-                        />
-                    ) : (
-                        <AgentCanvasDesigner
-                            onComplete={handleCanvasComplete}
-                            isDarkMode={isDarkMode}
-                            initialAgentData={customAgentData}
-                            selectedTeam={selectedTeam}
-                            onAgentsUpdated={(updatedAgents) => {
-                                // Optional: Handle agent list updates if needed
-                            }}
-                        />
-                    )}
-                </div>
-            )}
-
-            {/* Main Content - For non-canvas views */}
-            {viewMode !== 'canvas' && (
             <div style={{
-                maxWidth: 1200,
-                margin: '0 auto',
-                padding: '24px 24px 24px 24px'
+                padding: '16px 24px 24px 24px'
             }}>
-
-                {/* Pipeline View */}
-                {viewMode === 'pipeline' && (
-                    <AgentPipelineView
-                        agentData={customAgentData}
-                        onEdit={handleBackToCanvas}
-                        onBack={handleBackToCanvas}
+                {loading ? (
+                    <EmptyState
+                        type="loading"
                         isDarkMode={isDarkMode}
+                        teamName={selectedTeam?.name || 'agents'}
+                    />
+                ) : (
+                    <AgentCanvasDesigner
+                        isDarkMode={isDarkMode}
+                        initialAgentData={customAgentData}
+                        selectedTeam={selectedTeam}
+                        onAgentsUpdated={(updatedAgents) => {
+                            // Optional: Handle agent list updates if needed
+                        }}
                     />
                 )}
-
-                {/* Team Selection View */}
-                {viewMode === 'team' && (
-                    <>
-                        {/* Empty State */}
-                        {!selectedTeam && (
-                            <EmptyState
-                                type="select"
-                                isDarkMode={isDarkMode}
-                            />
-                        )}
-
-                        {/* Loading State */}
-                        {selectedTeam && loading && (
-                            <EmptyState
-                                type="loading"
-                                isDarkMode={isDarkMode}
-                                teamName={selectedTeam.name}
-                            />
-                        )}
-
-                        {/* Team Agent Execution */}
-                        {selectedTeam && !loading && agents.length > 0 && (
-                            <TeamAgentView
-                                currentAgent={currentAgent}
-                                currentStep={currentStep}
-                                agents={agents}
-                                completedSteps={completedSteps}
-                                agentData={agentData}
-                                isDarkMode={isDarkMode}
-                                isCurrentStepCompleted={isCurrentStepCompleted}
-                                isLastStep={isLastStep}
-                                onCompleteStep={handleCompleteStep}
-                                onNext={handleNext}
-                                onPrevious={handlePrevious}
-                                onAgentComplete={handleAgentComplete}
-                            />
-                        )}
-                    </>
-                )}
             </div>
-            )}
-
-            {/* Completion Modal */}
-            <Modal
-                title="Complete Step"
-                open={showCompleteModal}
-                onOk={confirmCompleteStep}
-                onCancel={() => setShowCompleteModal(false)}
-                okText="Complete"
-                cancelText="Cancel"
-            >
-                <p>Are you sure you want to mark this step as completed?</p>
-            </Modal>
 
             {/* AI Chat Sidebar */}
             <AIChatSidebar
@@ -452,7 +179,7 @@ const MainDev = () => {
             />
 
             {/* Floating Chat Button (when sidebar is closed) */}
-            {!isChatOpen && viewMode === 'canvas' && (
+            {!isChatOpen && (
                 <button
                     onClick={() => setIsChatOpen(true)}
                     style={{

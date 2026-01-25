@@ -7,17 +7,13 @@ const { Option } = Select;
 
 const MainDevHeader = ({
     isDarkMode,
-    viewMode,
     selectedTeam,
     teams,
     teamsLoading,
-    onTeamSelect,
-    onCustomAgents
+    onTeamSelect
 }) => {
     const getSubtitle = () => {
-        if (viewMode === 'canvas') return 'Design your custom agent pipeline';
-        if (viewMode === 'pipeline') return 'Your custom agent pipeline is ready';
-        return selectedTeam ? selectedTeam.description : 'Select a team or create custom agents';
+        return selectedTeam ? `Design the ${selectedTeam.name} agent workflow` : 'Select a team to start designing your agent pipeline';
     };
 
     return (
