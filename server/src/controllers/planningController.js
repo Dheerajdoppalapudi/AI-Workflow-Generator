@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import db from "../utils/prisma.js";
-// import axios from 'axios'; // TODO: Uncomment when Ollama integration is enabled
+import { generateResponse } from "../services/ollamaService.js";
 
 dotenv.config();
 
@@ -289,16 +289,9 @@ export const generateInitialPlanning = async (req, res) => {
     console.log('='.repeat(80));
 
     try {
-      // TODO: Call Ollama API (commented out for now)
-      // const ollamaResponse = await axios.post(
-      //   "http://localhost:11434/api/generate",
-      //   {
-      //     model: "llama3.1:latest",
-      //     prompt,
-      //     stream: false
-      //   }
-      // );
-      // const planningData = JSON.parse(ollamaResponse.data.response.trim());
+      // TODO: Enable Ollama integration by uncommenting the code below
+      // const aiResponse = await generateResponse(prompt);
+      // const planningData = JSON.parse(aiResponse.trim());
 
       // Mock planning data for now
       const planningData = getSamplePlanningSteps(enhancedText);

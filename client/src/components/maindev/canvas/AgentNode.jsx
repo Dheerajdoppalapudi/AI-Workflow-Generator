@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Handle, Position } from 'reactflow';
-import { Typography, Button, Tooltip, Divider } from 'antd';
+import { Typography, Button, Tooltip } from 'antd';
 import {
     RobotOutlined,
     EditOutlined,
@@ -139,64 +139,69 @@ const AgentNode = ({ data, selected }) => {
                 }}
             />
 
-            {/* Node Content */}
-            <div style={{ padding: '14px 16px' }}>
-                {/* Header with icon and name */}
+            {/* Title Section with Background */}
+            <div style={{
+                padding: '10px 14px',
+                backgroundColor: isDarkMode
+                    ? (isCommonAgent ? 'rgba(139, 92, 246, 0.1)' : 'rgba(59, 130, 246, 0.08)')
+                    : (isCommonAgent ? 'rgba(139, 92, 246, 0.06)' : 'rgba(59, 130, 246, 0.04)'),
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10
+            }}>
                 <div style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 7,
+                    background: themeGradient,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 10
+                    justifyContent: 'center',
+                    boxShadow: themeShadow,
+                    flexShrink: 0
                 }}>
-                    <div style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 10,
-                        background: themeGradient,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: themeShadow,
-                        flexShrink: 0
-                    }}>
-                        <RobotOutlined style={{ color: '#fff', fontSize: 20 }} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                        <Text strong style={{
-                            color: isDarkMode ? '#f3f4f6' : '#1f2937',
-                            fontSize: 14,
-                            display: 'block',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                        }}>
-                            {data.name}
-                        </Text>
-                        {isCommonAgent && (
-                            <Text style={{
-                                color: '#8b5cf6',
-                                fontSize: 10,
-                                fontWeight: 500,
-                                textTransform: 'uppercase'
-                            }}>
-                                Common Agent
-                            </Text>
-                        )}
-                    </div>
+                    <RobotOutlined style={{ color: '#fff', fontSize: 14 }} />
                 </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <Text strong style={{
+                        color: isDarkMode ? '#f3f4f6' : '#1f2937',
+                        fontSize: 13,
+                        display: 'block',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                    }}>
+                        {data.name}
+                    </Text>
+                    {isCommonAgent && (
+                        <Text style={{
+                            color: '#8b5cf6',
+                            fontSize: 9,
+                            fontWeight: 500,
+                            textTransform: 'uppercase'
+                        }}>
+                            Common Agent
+                        </Text>
+                    )}
+                </div>
+            </div>
 
-                {/* Divider */}
-                <Divider style={{
-                    margin: '12px 0',
-                    borderColor: isDarkMode ? '#374151' : '#e5e7eb'
-                }} />
+            {/* Full Width Divider */}
+            <div style={{
+                height: 1,
+                backgroundColor: isDarkMode ? '#374151' : '#e5e7eb',
+                width: '100%'
+            }} />
 
+            {/* Content Section */}
+            <div style={{ padding: '12px 14px' }}>
                 {/* Description */}
                 <Text style={{
                     color: isDarkMode ? '#9ca3af' : '#6b7280',
-                    fontSize: 12,
+                    fontSize: 13,
                     display: 'block',
                     lineHeight: 1.5,
-                    minHeight: 36
+                    minHeight: 40
                 }}>
                     {data.description && data.description.length > 80
                         ? `${data.description.substring(0, 80)}...`
@@ -208,7 +213,7 @@ const AgentNode = ({ data, selected }) => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    marginTop: 14,
+                    marginTop: 12,
                     paddingTop: 12,
                     borderTop: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`
                 }}>

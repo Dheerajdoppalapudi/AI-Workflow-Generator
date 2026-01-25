@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import db from "../utils/prisma.js";
-import axios from "axios";
+import { generateResponse, extractJsonFromResponse } from "../services/ollamaService.js";
 
 dotenv.config();
 
@@ -356,35 +356,16 @@ Generate the workflow JSON now:`;
 
     console.log('Calling Ollama with prompt...');
 
-    // Call Ollama API
-    const ollamaResponse = await axios.post(
-      "http://localhost:11434/api/generate",
-      {
-        model: "llama3.1:latest",
-        prompt: engineeredPrompt,
-        stream: false
-      },
-      {
-        timeout: 120000 // 2 minute timeout
-      }
-    );
+    // Call Ollama API using centralized service
+    const aiResponse = await generateResponse(engineeredPrompt);
 
     console.log('Ollama response received');
-
-    const aiResponse = ollamaResponse.data.response;
     console.log('AI Response:', aiResponse);
 
     // Extract JSON from the response
     let workflowJson;
     try {
-      // Try to find JSON in the response
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        workflowJson = JSON.parse(jsonMatch[0]);
-      } else {
-        // If no JSON found, try parsing the whole response
-        workflowJson = JSON.parse(aiResponse);
-      }
+      workflowJson = extractJsonFromResponse(aiResponse);
 
       // Validate the structure
       if (!workflowJson.agents || !Array.isArray(workflowJson.agents)) {
@@ -418,9 +399,17 @@ Generate the workflow JSON now:`;
     console.error("Error generating workflow:", error);
 
     // Check if it's an Ollama connection error
-    if (error.code === 'ECONNREFUSED') {
+    if (error.code === 'OLLAMA_CONNECTION_ERROR') {
       return res.status(503).json({
-        error: "Unable to connect to Ollama. Please ensure Ollama is running on localhost:11434",
+        error: error.message,
+        success: false
+      });
+    }
+
+    // Check if it's a timeout error
+    if (error.code === 'OLLAMA_TIMEOUT_ERROR') {
+      return res.status(504).json({
+        error: error.message,
         success: false
       });
     }
